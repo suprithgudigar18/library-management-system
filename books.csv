@@ -1,0 +1,101 @@
+Title,Author,isbn,Category,Genre,Copies,Status,Shelf
+,,,Academic,Programming,1,Available,A-01
+Atomic Habits,James Clear,9.78074E+13,Self-help,Productivity,2,Available,B-02
+The Great Gatsby,F. Scott Fitzgerald,9.78074E+13,Fiction,Classic,3,Available,C-03
+1984,George Orwell,9.78045E+13,Fiction,Dystopian,4,Available,A-04
+To Kill a Mockingbird,Harper Lee,9.78006E+13,Fiction,Classic,5,Available,B-05
+The Alchemist,Paulo Coelho,9.78006E+13,Fiction,Philosophy,6,Available,C-06
+Sapiens,Yuval Noah Harari,9.78006E+13,Non-Fiction,History,7,Available,A-07
+Homo Deus,Yuval Noah Harari,9.78006E+13,Non-Fiction,Future,8,Available,B-08
+Rich Dad Poor Dad,Robert Kiyosaki,9.78161E+13,Finance,Money,9,Available,C-09
+Think and Grow Rich,Napoleon Hill,9.78159E+13,Self-help,Success,10,Available,A-10
+Deep Work,Cal Newport,9.78146E+14,Self-help,Productivity,1,Available,B-01
+Zero to One,Peter Thiel,9.7808E+14,Business,Startup,2,Available,C-02
+The Lean Startup,Eric Ries,9.78031E+14,Business,Startup,3,Available,A-03
+Start With Why,Simon Sinek,9.78159E+14,Business,Leadership,4,Available,B-04
+The Power of Habit,Charles Duhigg,9.78081E+14,Self-help,Habit,5,Available,C-05
+Ikigai,Hector Garcia,9.78014E+14,Self-help,Lifestyle,6,Available,A-06
+Harry Potter and the Sorcerer's Stone,J.K. Rowling,9.78059E+14,Fiction,Fantasy,7,Available,B-07
+Harry Potter and the Chamber of Secrets,J.K. Rowling,9.78044E+14,Fiction,Fantasy,8,Available,C-08
+Harry Potter and the Prisoner of Azkaban,J.K. Rowling,9.78044E+14,Fiction,Fantasy,9,Available,A-09
+The Hobbit,J.R.R. Tolkien,9.78055E+14,Fiction,Fantasy,10,Available,B-10
+The Lord of the Rings,J.R.R. Tolkien,9.78062E+14,Fiction,Fantasy,1,Available,C-01
+A Game of Thrones,George R.R. Martin,9.78055E+14,Fiction,Fantasy,2,Available,A-02
+The Catcher in the Rye,J.D. Salinger,9.78032E+14,Fiction,Classic,3,Available,B-03
+The Da Vinci Code,Dan Brown,9.78031E+14,Fiction,Thriller,4,Available,C-04
+Angels and Demons,Dan Brown,9.78074E+14,Fiction,Thriller,5,Available,A-05
+Digital Fortress,Dan Brown,9.78031E+14,Fiction,Tech Thriller,6,Available,B-06
+The Kite Runner,Khaled Hosseini,9.78159E+14,Fiction,Drama,7,Available,C-07
+A Thousand Splendid Suns,Khaled Hosseini,9.78159E+14,Fiction,Drama,8,Available,A-08
+The Book Thief,Markus Zusak,9.78038E+14,Fiction,Historical,9,Available,B-09
+The Fault in Our Stars,John Green,9.78014E+14,Fiction,Romance,10,Available,C-10
+Looking for Alaska,John Green,9.78014E+14,Fiction,Young Adult,1,Available,A-01
+The Subtle Art of Not Giving a F*ck,Mark Manson,9.78006E+14,Self-help,Lifestyle,2,Available,B-02
+You Can Win,Shiv Khera,9.78936E+14,Self-help,Motivation,3,Available,C-03
+Wings of Fire,A.P.J. Abdul Kalam,9.78817E+14,Biography,Inspiration,4,Available,A-04
+Ignited Minds,A.P.J. Abdul Kalam,9.78014E+14,Non-Fiction,Inspiration,5,Available,B-05
+The Psychology of Money,Morgan Housel,9.78086E+14,Finance,Money,6,Available,C-06
+Think Like a Monk,Jay Shetty,9.78198E+14,Self-help,Mindfulness,7,Available,A-07
+The 7 Habits of Highly Effective People,Stephen Covey,9.78074E+14,Self-help,Leadership,8,Available,B-08
+Can't Hurt Me,David Goggins,9.78154E+14,Self-help,Motivation,9,Available,C-09
+Steve Jobs,Walter Isaacson,9.78145E+14,Biography,Tech,10,Available,A-10
+Elon Musk,Ashlee Vance,9.78006E+14,Biography,Tech,1,Available,B-01
+The Code Book,Simon Singh,9.78039E+14,Science,Cryptography,2,Available,C-02
+A Brief History of Time,Stephen Hawking,9.78055E+14,Science,Physics,3,Available,A-03
+The Selfish Gene,Richard Dawkins,9.7802E+14,Science,Biology,4,Available,B-04
+The Gene,Siddhartha Mukherjee,9.78148E+14,Science,Biology,5,Available,C-05
+The Immortal Life of Henrietta Lacks,Rebecca Skloot,9.7814E+14,Science,Biography,6,Available,A-06
+The Design of Everyday Things,Don Norman,9.78047E+14,Design,UX,7,Available,B-07
+Don't Make Me Think,Steve Krug,9.78032E+14,Design,UX,8,Available,C-08
+Refactoring,Martin Fowler,9.7802E+14,Programming,Software,9,Available,A-09
+Code Complete,Steve McConnell,9.78074E+14,Programming,Software,10,Available,B-10
+Clean Code,Robert C. Martin,9.78013E+14,Academic,Programming,1,Available,C-01
+Atomic Habits,James Clear,9.78074E+14,Self-help,Productivity,2,Available,A-02
+The Great Gatsby,F. Scott Fitzgerald,9.78074E+14,Fiction,Classic,3,Available,B-03
+1984,George Orwell,9.78045E+14,Fiction,Dystopian,4,Available,C-04
+To Kill a Mockingbird,Harper Lee,9.78006E+14,Fiction,Classic,5,Available,A-05
+The Alchemist,Paulo Coelho,9.78006E+14,Fiction,Philosophy,6,Available,B-06
+Sapiens,Yuval Noah Harari,9.78006E+14,Non-Fiction,History,7,Available,C-07
+Homo Deus,Yuval Noah Harari,9.78006E+14,Non-Fiction,Future,8,Available,A-08
+Rich Dad Poor Dad,Robert Kiyosaki,9.78161E+14,Finance,Money,9,Available,B-09
+Think and Grow Rich,Napoleon Hill,9.78159E+14,Self-help,Success,10,Available,C-10
+Deep Work,Cal Newport,9.78146E+14,Self-help,Productivity,1,Available,A-01
+Zero to One,Peter Thiel,9.7808E+14,Business,Startup,2,Available,B-02
+The Lean Startup,Eric Ries,9.78031E+14,Business,Startup,3,Available,C-03
+Start With Why,Simon Sinek,9.78159E+14,Business,Leadership,4,Available,A-04
+The Power of Habit,Charles Duhigg,9.78081E+14,Self-help,Habit,5,Available,B-05
+Ikigai,Hector Garcia,9.78014E+14,Self-help,Lifestyle,6,Available,C-06
+Harry Potter and the Sorcerer's Stone,J.K. Rowling,9.78059E+14,Fiction,Fantasy,7,Available,A-07
+Harry Potter and the Chamber of Secrets,J.K. Rowling,9.78044E+14,Fiction,Fantasy,8,Available,B-08
+Harry Potter and the Prisoner of Azkaban,J.K. Rowling,9.78044E+14,Fiction,Fantasy,9,Available,C-09
+The Hobbit,J.R.R. Tolkien,9.78055E+14,Fiction,Fantasy,10,Available,A-10
+The Lord of the Rings,J.R.R. Tolkien,9.78062E+14,Fiction,Fantasy,1,Available,B-01
+A Game of Thrones,George R.R. Martin,9.78055E+14,Fiction,Fantasy,2,Available,C-02
+The Catcher in the Rye,J.D. Salinger,9.78032E+14,Fiction,Classic,3,Available,A-03
+The Da Vinci Code,Dan Brown,9.78031E+14,Fiction,Thriller,4,Available,B-04
+Angels and Demons,Dan Brown,9.78074E+14,Fiction,Thriller,5,Available,C-05
+Digital Fortress,Dan Brown,9.78031E+14,Fiction,Tech Thriller,6,Available,A-06
+The Kite Runner,Khaled Hosseini,9.78159E+14,Fiction,Drama,7,Available,B-07
+A Thousand Splendid Suns,Khaled Hosseini,9.78159E+14,Fiction,Drama,8,Available,C-08
+The Book Thief,Markus Zusak,9.78038E+14,Fiction,Historical,9,Available,A-09
+The Fault in Our Stars,John Green,9.78014E+14,Fiction,Romance,10,Available,B-10
+Looking for Alaska,John Green,9.78014E+14,Fiction,Young Adult,1,Available,C-01
+The Subtle Art of Not Giving a F*ck,Mark Manson,9.78006E+14,Self-help,Lifestyle,2,Available,A-02
+You Can Win,Shiv Khera,9.78936E+14,Self-help,Motivation,3,Available,B-03
+Wings of Fire,A.P.J. Abdul Kalam,9.78817E+14,Biography,Inspiration,4,Available,C-04
+Ignited Minds,A.P.J. Abdul Kalam,9.78014E+14,Non-Fiction,Inspiration,5,Available,A-05
+The Psychology of Money,Morgan Housel,9.78086E+14,Finance,Money,6,Available,B-06
+Think Like a Monk,Jay Shetty,9.78198E+14,Self-help,Mindfulness,7,Available,C-07
+The 7 Habits of Highly Effective People,Stephen Covey,9.78074E+14,Self-help,Leadership,8,Available,A-08
+Can't Hurt Me,David Goggins,9.78154E+14,Self-help,Motivation,9,Available,B-09
+Steve Jobs,Walter Isaacson,9.78145E+14,Biography,Tech,10,Available,C-10
+Elon Musk,Ashlee Vance,9.78006E+14,Biography,Tech,1,Available,A-01
+The Code Book,Simon Singh,9.78039E+14,Science,Cryptography,2,Available,B-02
+A Brief History of Time,Stephen Hawking,9.78055E+14,Science,Physics,3,Available,C-03
+The Selfish Gene,Richard Dawkins,9.7802E+14,Science,Biology,4,Available,A-04
+The Gene,Siddhartha Mukherjee,9.78148E+14,Science,Biology,5,Available,B-05
+The Immortal Life of Henrietta Lacks,Rebecca Skloot,9.7814E+14,Science,Biography,6,Available,C-06
+The Design of Everyday Things,Don Norman,9.78047E+14,Design,UX,7,Available,A-07
+Don't Make Me Think,Steve Krug,9.78032E+14,Design,UX,8,Available,B-08
+Refactoring,Martin Fowler,9.7802E+14,Programming,Software,9,Available,C-09
+Code Complete,Steve McConnell,9.78074E+14,Programming,Software,10,Available,A-10
