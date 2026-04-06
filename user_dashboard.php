@@ -423,7 +423,7 @@ if (isset($toastMsgs[$uploadMsg])): ?>
     <button onclick="switchTab('requests')" id="tab-requests" class="tab-btn pb-3 text-sm font-medium tab-inactive whitespace-nowrap">🗂 My Requests (<?= count($myRequests) ?>)</button>
     <button onclick="switchTab('fines')"    id="tab-fines"    class="tab-btn pb-3 text-sm font-medium tab-inactive whitespace-nowrap">
         💳 Fine<?php if($totalFineAmt>0): ?> <span class="text-red-400 font-bold">₹<?= $totalFineAmt ?></span><?php endif; ?>
-    </button>
+    </button><br>
     <button onclick="switchTab('ai')"       id="tab-ai"       class="tab-btn pb-3 text-sm font-medium tab-inactive whitespace-nowrap">🤖 AI Assistant</button>
     <button onclick="switchTab('purchase')" id="tab-purchase" class="tab-btn pb-3 text-sm font-medium tab-inactive whitespace-nowrap">📋 Request a Book</button>
 </div>
