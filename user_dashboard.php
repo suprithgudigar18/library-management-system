@@ -104,14 +104,14 @@ $myReqStmt = $pdo->prepare("
 $myReqStmt->execute([$user_id]);
 $myRequests = $myReqStmt->fetchAll();
 
-// ── Auto fines ────────────────────────────────────────────────────────────────
+// ── Auto fines (₹10 per day from day 1 of being overdue) ─────────────────────
 $today = new DateTime();
 foreach ($myRequests as &$req) {
-    if ($req['status'] === 'Approved' && $req['due_date'] && !$req['returned_at']) {
+    if ($req['status'] === 'Approved' && $req['due_date'] && !$req['returned_at'] && !($req['fine_paid'] ?? 0)) {
         $due = new DateTime($req['due_date']);
         if ($today > $due) {
             $days = (int)$today->diff($due)->days;
-            $fine = 20 + (floor(($days - 1) / 2) * 10);
+            $fine = $days * 10; // ₹10 per day, every day overdue
             $pdo->prepare("UPDATE book_requests SET fine_amount=? WHERE id=?")->execute([$fine, $req['id']]);
             $req['fine_amount'] = $fine;
         }
@@ -423,7 +423,7 @@ if (isset($toastMsgs[$uploadMsg])): ?>
     <button onclick="switchTab('requests')" id="tab-requests" class="tab-btn pb-3 text-sm font-medium tab-inactive whitespace-nowrap">🗂 My Requests (<?= count($myRequests) ?>)</button>
     <button onclick="switchTab('fines')"    id="tab-fines"    class="tab-btn pb-3 text-sm font-medium tab-inactive whitespace-nowrap">
         💳 Fine<?php if($totalFineAmt>0): ?> <span class="text-red-400 font-bold">₹<?= $totalFineAmt ?></span><?php endif; ?>
-    </button><br>
+    </button>
     <button onclick="switchTab('ai')"       id="tab-ai"       class="tab-btn pb-3 text-sm font-medium tab-inactive whitespace-nowrap">🤖 AI Assistant</button>
     <button onclick="switchTab('purchase')" id="tab-purchase" class="tab-btn pb-3 text-sm font-medium tab-inactive whitespace-nowrap">📋 Request a Book</button>
 </div>
@@ -746,26 +746,39 @@ if (isset($toastMsgs[$uploadMsg])): ?>
             $myPurchaseReqs = $pdo->prepare("SELECT * FROM book_purchase_requests WHERE user_id=? ORDER BY created_at DESC LIMIT 10");
             $myPurchaseReqs->execute([$user_id]);
             $myPurchaseReqs = $myPurchaseReqs->fetchAll();
-            $pStatusColors = ['Pending'=>'badge-pending','Reviewed'=>'badge-approved','Ordered'=>'badge-approved','Rejected'=>'badge-rejected'];
             ?>
             <?php if (empty($myPurchaseReqs)): ?>
-            <div class="card p-6 text-center" style="color:var(--muted)"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-30"></i><p class="text-sm">No requests yet.</p></div>
+            <div class="card p-6 text-center" style="color:var(--muted)"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-30"></i><p class="text-sm">No requests yet. Use the form to request a book!</p></div>
             <?php else: ?>
             <div class="space-y-3">
-                <?php foreach ($myPurchaseReqs as $pr): ?>
-                <div class="card p-4">
-                    <div class="flex items-start justify-between gap-2">
-                        <div>
-                            <div class="font-semibold text-white text-sm"><?= htmlspecialchars($pr['book_title']) ?></div>
-                            <?php if ($pr['author']): ?><div class="text-xs" style="color:var(--muted)"><?= htmlspecialchars($pr['author']) ?></div><?php endif; ?>
-                            <div class="text-xs mt-1" style="color:var(--muted)"><?= date('d M Y', strtotime($pr['created_at'])) ?></div>
+                <?php foreach ($myPurchaseReqs as $pr):
+                    $sIcons=['Pending'=>'⏳','Reviewed'=>'👀','Ordered'=>'✅','Rejected'=>'❌'];
+                    $sStyles=['Pending'=>'background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);color:#fbbf24','Reviewed'=>'background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.3);color:#60a5fa','Ordered'=>'background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);color:#34d399','Rejected'=>'background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3);color:#f87171'];
+                    $sStyle=$sStyles[$pr['status']]??$sStyles['Pending'];
+                    $sIcon=$sIcons[$pr['status']]??'⏳';
+                    $borderColor=$pr['status']=='Ordered'?'#34d399':($pr['status']=='Rejected'?'#f87171':($pr['status']=='Reviewed'?'#60a5fa':'#fbbf24'));
+                ?>
+                <div class="card p-4" style="border-left:3px solid <?= $borderColor ?>">
+                    <div class="flex items-start justify-between gap-2 flex-wrap">
+                        <div style="flex:1">
+                            <div class="font-semibold text-white"><?= htmlspecialchars($pr['book_title']) ?></div>
+                            <?php if ($pr['author']): ?><div class="text-xs mt-0.5" style="color:var(--muted)">by <?= htmlspecialchars($pr['author']) ?></div><?php endif; ?>
+                            <div class="text-xs mt-1" style="color:var(--muted)">Requested on <?= date('d M Y', strtotime($pr['created_at'])) ?></div>
                         </div>
-                        <span class="badge <?= $pStatusColors[$pr['status']] ?? 'badge-pending' ?> whitespace-nowrap"><?= $pr['status'] ?></span>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap" style="<?= $sStyle ?>"><?= $sIcon ?> <?= $pr['status'] ?></span>
                     </div>
+                    <?php if ($pr['reason']): ?>
+                    <div class="mt-2 text-xs px-3 py-2 rounded-lg" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--muted)">
+                        Your reason: <?= htmlspecialchars($pr['reason']) ?>
+                    </div>
+                    <?php endif; ?>
                     <?php if ($pr['admin_note']): ?>
-                    <div class="mt-2 text-xs p-2 rounded" style="background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.2);color:#58a6ff">
-                        Admin note: <?= htmlspecialchars($pr['admin_note']) ?>
+                    <div class="mt-2 px-3 py-2 rounded-lg" style="background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25)">
+                        <div class="text-xs font-bold mb-1" style="color:#22d3ee">📩 Admin Response:</div>
+                        <div class="text-sm" style="color:rgba(255,255,255,.85)"><?= htmlspecialchars($pr['admin_note']) ?></div>
                     </div>
+                    <?php else: ?>
+                    <div class="mt-2 text-xs px-3 py-2 rounded-lg" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);color:var(--muted)">⏳ Waiting for admin response...</div>
                     <?php endif; ?>
                 </div>
                 <?php endforeach; ?>
