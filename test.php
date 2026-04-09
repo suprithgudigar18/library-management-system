@@ -825,7 +825,11 @@ if (isset($toastMsgs[$uploadMsg])): ?>
         <div class="flex items-center gap-3">
             <div class="ai-chat-avatar">🤖</div>
             <div>
+<<<<<<< HEAD
                 <div class="ai-chat-title"><b>LIBRITE AI</b></div>
+=======
+                <div class="ai-chat-title">LIBRITE AI</div>
+>>>>>>> 25d499b07ce8f47dc503da4dec55cd9fdf5ab226
                 <div class="ai-chat-status">Online · Ready to help</div>
             </div>
         </div>
