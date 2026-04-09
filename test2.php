@@ -409,7 +409,7 @@ if (isset($toastMsgs[$uploadMsg])): ?>
 <div class="max-w-6xl mx-auto px-4 py-8">
 
 <div class="mb-8 pb-6" style="border-bottom:1px solid var(--border)">
-    <h1 class="text-2xl font-bold text-white">Welcome , <?= htmlspecialchars($userData['full_name']?:$username) ?> 👋</h1>
+    <h1 class="text-2xl font-bold text-white">Welcome back, <?= htmlspecialchars($userData['full_name']?:$username) ?> 👋</h1>
     <p class="italic mt-1 text-sm" style="color:var(--muted)">"A reader lives a thousand lives before he dies."</p>
     <div class="flex gap-3 mt-3 flex-wrap">
         <div class="text-xs px-3 py-1.5 rounded" style="background:rgba(227,179,65,.1);border-left:3px solid var(--warn)">📅 Loan limit: <strong>4 days</strong></div>
@@ -463,6 +463,7 @@ if (isset($toastMsgs[$uploadMsg])): ?>
     ?>
     <div class="book-card" data-title="<?= strtolower(htmlspecialchars($b['title'])) ?>" data-author="<?= strtolower(htmlspecialchars($b['author'])) ?>" data-isbn="<?= strtolower(htmlspecialchars($b['isbn']??'')) ?>" data-status="<?= htmlspecialchars($b['status']) ?>" data-cat="<?= htmlspecialchars($b['category']??'') ?>">
         <div class="book-card-img">
+           
             <div class="img-placeholder">
                 <i data-lucide="book-open" class="w-8 h-8 opacity-20"></i>
                 <span class="text-xs opacity-30 px-3 text-center leading-tight"><?= htmlspecialchars($b['title']) ?></span>

@@ -200,7 +200,7 @@ DOOoorrrr...</text>
         <footer class="mt-20 mb-12 text-center">
             <button onclick="window.history.back()" class="inline-flex items-center gap-2 text-slate-400 hover:text-sky-400 transition-colors py-2 px-4 rounded-full border border-slate-700 hover:border-sky-500">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                Back to Dashboard
+                Back to Home
             </button>
         </footer>
     </div>
