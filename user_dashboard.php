@@ -463,6 +463,19 @@ if (isset($toastMsgs[$uploadMsg])): ?>
     ?>
     <div class="book-card" data-title="<?= strtolower(htmlspecialchars($b['title'])) ?>" data-author="<?= strtolower(htmlspecialchars($b['author'])) ?>" data-isbn="<?= strtolower(htmlspecialchars($b['isbn']??'')) ?>" data-status="<?= htmlspecialchars($b['status']) ?>" data-cat="<?= htmlspecialchars($b['category']??'') ?>">
         <div class="book-card-img">
+             <?php
+            // Generate deterministic but varied cover color & seed based on book id
+            $coverSeed = $b['id'] * 37 + crc32($b['title']) % 1000;
+            $coverSeed = abs($coverSeed) % 1000;
+            $coverUrl  = "https://picsum.photos/seed/book{$coverSeed}/300/200";
+            $catColors = ['Fiction'=>'#7c3aed','Non-Fiction'=>'#0369a1','Academic'=>'#047857','Reference'=>'#b45309','default'=>'#1e3a5f'];
+            $cat = $b['category'] ?? 'default';
+            $bgColor = $catColors[$cat] ?? $catColors['default'];
+            ?>
+            <img src="<?= $coverUrl ?>" alt="<?= htmlspecialchars($b['title']) ?>"
+                 loading="lazy"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+                 style="width:100%;height:100%;object-fit:cover;">
             <div class="img-placeholder">
                 <i data-lucide="book-open" class="w-8 h-8 opacity-20"></i>
                 <span class="text-xs opacity-30 px-3 text-center leading-tight"><?= htmlspecialchars($b['title']) ?></span>
