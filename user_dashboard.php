@@ -714,7 +714,7 @@ if (isset($toastMap[$uploadMsg])): ?>
 
 <!-- AI FAB — links to chatbot page -->
 <div style="position:fixed;bottom:28px;right:28px;z-index:8000">
-    <a href="chatbot.php" id="ai-fab" title="LIBRITE AI Assistant">🤖</a>
+    <a href="chat_bot.php" id="ai-fab" title="LIBRITE AI Assistant">🤖</a>
     <div id="ai-fab-label">🤖 Ask LIBRITE AI</div>
 </div>
 

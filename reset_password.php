@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
             $stmt->execute([$hashed_password, $user_id]);
 
-            $message = "Success! Password updated. <a href='login.php' style='color:#22d3ee;'>Login here</a>";
+            $message = "Success! Password updated. <a href='user_login.php' style='color:#22d3ee;'>Login here</a>";
             
             // Clear the session so the link expires
             unset($_SESSION['reset_user_id']);
