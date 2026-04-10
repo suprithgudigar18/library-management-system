@@ -93,7 +93,16 @@ $userData = $userData->fetch();
 $profilePhoto = $userData['profile_photo'] ?? '';
 
 // ── Fetch books ───────────────────────────────────────────────────────────────
-$books = $pdo->query("SELECT * FROM books ORDER BY title ASC")->fetchAll();
+// Deduplicate books — group same title+author into one card, sum their copies
+$books = $pdo->query("
+    SELECT MIN(id) AS id, title, author, isbn,
+           SUM(copies) AS copies,
+           MAX(status) AS status,
+           category, genre, shelf, description
+    FROM books
+    GROUP BY LOWER(TRIM(title)), LOWER(TRIM(author))
+    ORDER BY title ASC
+")->fetchAll();
 
 // ── Fetch requests ────────────────────────────────────────────────────────────
 $myReqStmt = $pdo->prepare("
@@ -204,22 +213,66 @@ input[type=file]{display:none;}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);opacity:0;transition:all .3s;z-index:9999;border-radius:999px;padding:10px 22px;font-size:.875rem;font-weight:600;}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 .header-avatar{width:36px;height:36px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--accent);font-weight:700;font-size:.82rem;background:#21262d;}
-.books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;}
-.book-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s,border-color .2s;}
-.book-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.5);border-color:#58a6ff44;}
-.book-card-img{height:160px;overflow:hidden;position:relative;background:#161b22;}
-.book-card-img img{width:100%;height:100%;object-fit:cover;}
-.img-placeholder{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#161b22,#1f2937);}
-.copies-pill{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.75);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:2px 9px;font-size:.7rem;font-weight:600;color:white;}
-.book-card-body{padding:12px 14px;flex:1;display:flex;flex-direction:column;gap:4px;}
-.book-card-title{font-weight:700;color:white;font-size:.88rem;line-height:1.3;}
-.book-card-author{color:var(--muted);font-size:.76rem;}
-.book-card-footer{padding:8px 14px 14px;}
-.btn-req-card{width:100%;padding:8px;border-radius:8px;font-weight:600;font-size:.8rem;cursor:pointer;border:none;transition:all .2s;}
-.btn-req-card.can{background:#238636;color:white;}
-.btn-req-card.can:hover{background:#2ea043;}
-.btn-req-card.done{background:rgba(88,166,255,.1);color:#58a6ff;border:1px solid rgba(88,166,255,.3);cursor:default;}
-.btn-req-card.none{background:#21262d;color:var(--muted);cursor:not-allowed;}
+.books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;}
+
+/* ── Enhanced Book Card ── */
+.book-card{background:var(--card);border:1px solid var(--border);border-radius:16px;
+    overflow:hidden;display:flex;flex-direction:column;
+    transition:transform .25s cubic-bezier(.4,0,.2,1),box-shadow .25s,border-color .25s;}
+.book-card:hover{transform:translateY(-6px);
+    box-shadow:0 20px 50px rgba(0,0,0,.6),0 0 0 1px rgba(88,166,255,.15);
+    border-color:rgba(88,166,255,.35);}
+
+.book-card-img{height:180px;overflow:hidden;position:relative;background:#161b22;flex-shrink:0;}
+.book-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease;}
+.book-card:hover .book-card-img img{transform:scale(1.06);}
+.img-placeholder{width:100%;height:100%;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:10px;}
+
+/* Overlay on hover for image */
+.book-card-img-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 50%);
+    opacity:0;transition:opacity .25s;}
+.book-card:hover .book-card-img-overlay{opacity:1;}
+
+/* Copies pill */
+.copies-pill{position:absolute;top:8px;right:8px;
+    background:rgba(0,0,0,.8);border:1px solid rgba(255,255,255,.2);
+    border-radius:20px;padding:3px 10px;font-size:.7rem;font-weight:700;color:white;
+    backdrop-filter:blur(4px);display:flex;align-items:center;gap:4px;}
+.copies-pill.available{border-color:rgba(63,185,80,.4);color:#3fb950;}
+.copies-pill.low{border-color:rgba(251,191,36,.4);color:#fbbf24;}
+.copies-pill.none{border-color:rgba(248,81,73,.4);color:#f85149;}
+
+/* Status badge bottom-left */
+.book-status-badge{position:absolute;bottom:8px;left:8px;}
+
+/* Card body */
+.book-card-body{padding:14px 14px 10px;flex:1;display:flex;flex-direction:column;gap:6px;}
+.book-card-title{font-weight:700;color:white;font-size:.92rem;line-height:1.35;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.book-card-author{color:var(--muted);font-size:.78rem;font-weight:500;}
+.book-card-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px;}
+.book-meta-tag{display:inline-flex;align-items:center;gap:3px;font-size:.68rem;
+    padding:2px 7px;border-radius:10px;font-weight:600;}
+.tag-cat{background:rgba(88,166,255,.1);color:#58a6ff;border:1px solid rgba(88,166,255,.2);}
+.tag-shelf{background:rgba(255,255,255,.05);color:var(--muted);border:1px solid rgba(255,255,255,.08);}
+.book-card-desc{font-size:.76rem;color:rgba(255,255,255,.45);line-height:1.5;margin-top:2px;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+    flex:1;}
+
+/* Footer */
+.book-card-footer{padding:0 14px 14px;}
+.btn-req-card{width:100%;padding:9px;border-radius:10px;font-weight:700;
+    font-size:.82rem;cursor:pointer;border:none;transition:all .2s;
+    display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:.3px;}
+.btn-req-card.can{background:linear-gradient(135deg,#238636,#1a7f37);color:white;
+    box-shadow:0 4px 12px rgba(35,134,54,.3);}
+.btn-req-card.can:hover{background:linear-gradient(135deg,#2ea043,#238636);
+    box-shadow:0 6px 20px rgba(35,134,54,.45);transform:translateY(-1px);}
+.btn-req-card.done{background:rgba(88,166,255,.1);color:#58a6ff;
+    border:1px solid rgba(88,166,255,.3);cursor:default;}
+.btn-req-card.none{background:rgba(255,255,255,.04);color:var(--muted);
+    border:1px solid rgba(255,255,255,.08);cursor:not-allowed;}
 
 /* AI Assistant */
 .ai-bubble{background:linear-gradient(135deg,#0d2818,#0d1526);border:1px solid rgba(35,134,54,.3);border-radius:16px;padding:20px;}
@@ -241,6 +294,77 @@ input[type=file]{display:none;}
 .step-badge{width:24px;height:24px;border-radius:50%;background:rgba(35,134,54,.2);border:1px solid rgba(63,185,80,.3);color:#3fb950;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 
 @media(max-width:480px){#profilePanel{width:100vw;right:-100vw;}.books-grid{grid-template-columns:repeat(2,1fr);}}
+
+/* ══ FLOATING AI CHATBOT ══════════════════════════════════════════════════ */
+#ai-fab{position:fixed;bottom:28px;right:28px;z-index:8000;width:58px;height:58px;border-radius:50%;
+    background:linear-gradient(135deg,#238636,#1a7f37);border:2px solid rgba(63,185,80,.4);
+    box-shadow:0 8px 30px rgba(35,134,54,.45);cursor:pointer;display:flex;align-items:center;
+    justify-content:center;font-size:1.5rem;transition:transform .25s,box-shadow .25s;
+    animation:fabPulse 2.5s ease-in-out infinite;}
+#ai-fab:hover{transform:scale(1.12);box-shadow:0 12px 40px rgba(35,134,54,.6);}
+@keyframes fabPulse{0%,100%{box-shadow:0 8px 30px rgba(35,134,54,.45)}50%{box-shadow:0 8px 40px rgba(35,134,54,.7)}}
+#ai-fab .notif-dot{position:absolute;top:2px;right:2px;width:12px;height:12px;border-radius:50%;
+    background:#f85149;border:2px solid var(--bg);display:none;}
+#ai-fab.has-notif .notif-dot{display:block;}
+
+#ai-chat-box{position:fixed;bottom:100px;right:28px;z-index:8000;width:370px;max-height:560px;
+    background:var(--card);border:1px solid rgba(63,185,80,.25);border-radius:20px;
+    box-shadow:0 20px 60px rgba(0,0,0,.7);display:none;flex-direction:column;overflow:hidden;
+    animation:chatSlideUp .3s cubic-bezier(.175,.885,.32,1.275);}
+#ai-chat-box.open{display:flex;}
+@keyframes chatSlideUp{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+.ai-chat-header{background:linear-gradient(135deg,#0d2818,#0d1526);padding:14px 18px;
+    display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06);}
+.ai-chat-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#238636,#58a6ff);
+    display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.ai-chat-title{font-weight:700;color:white;font-size:.9rem;}
+.ai-chat-status{font-size:.7rem;color:#3fb950;display:flex;align-items:center;gap:4px;}
+.ai-chat-status::before{content:'';width:6px;height:6px;border-radius:50%;background:#3fb950;display:inline-block;}
+.ai-close-btn{width:28px;height:28px;border-radius:8px;border:none;background:rgba(255,255,255,.06);
+    color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.ai-close-btn:hover{background:rgba(255,255,255,.12);color:white;}
+
+.ai-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;
+    scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.ai-messages::-webkit-scrollbar{width:4px;}
+.ai-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+.ai-msg-bot{background:var(--card2);border:1px solid var(--border);border-radius:12px 12px 12px 4px;
+    padding:10px 13px;font-size:.82rem;line-height:1.55;color:var(--main);max-width:90%;align-self:flex-start;white-space:pre-line;}
+.ai-msg-user{background:rgba(35,134,54,.15);border:1px solid rgba(63,185,80,.25);
+    border-radius:12px 12px 4px 12px;padding:10px 13px;font-size:.82rem;color:#c9d1d9;
+    max-width:85%;align-self:flex-end;text-align:right;}
+.ai-book-card{background:rgba(88,166,255,.06);border:1px solid rgba(88,166,255,.2);border-radius:10px;
+    padding:9px 12px;margin-top:6px;cursor:pointer;transition:background .2s;}
+.ai-book-card:hover{background:rgba(88,166,255,.12);}
+.ai-book-card-title{font-weight:700;color:white;font-size:.8rem;}
+.ai-book-card-meta{font-size:.7rem;color:var(--muted);margin-top:2px;}
+.ai-book-desc{font-size:.72rem;color:rgba(255,255,255,.5);margin-top:4px;line-height:1.45;}
+
+.ai-typing-indicator{display:flex;align-items:center;gap:4px;padding:10px 13px;
+    background:var(--card2);border:1px solid var(--border);border-radius:12px 12px 12px 4px;
+    max-width:70px;align-self:flex-start;}
+.ai-typing-indicator span{width:6px;height:6px;border-radius:50%;background:var(--muted);
+    animation:aiDot .8s infinite;}
+.ai-typing-indicator span:nth-child(2){animation-delay:.15s;}
+.ai-typing-indicator span:nth-child(3){animation-delay:.3s;}
+@keyframes aiDot{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(-4px);opacity:1}}
+
+.ai-quick-pills{display:flex;gap:6px;flex-wrap:wrap;padding:8px 14px;border-top:1px solid rgba(255,255,255,.04);}
+.ai-pill{font-size:.7rem;padding:4px 10px;border-radius:20px;border:1px solid rgba(88,166,255,.2);
+    background:rgba(88,166,255,.06);color:#58a6ff;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.ai-pill:hover{background:rgba(88,166,255,.15);border-color:#58a6ff;}
+
+.ai-input-row{padding:10px 14px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:8px;align-items:center;}
+.ai-text-input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;
+    color:white;padding:8px 12px;font-size:.82rem;outline:none;font-family:'Space Grotesk',sans-serif;transition:border-color .2s;}
+.ai-text-input:focus{border-color:#238636;}
+.ai-text-input::placeholder{color:var(--muted);}
+.ai-send-btn{width:34px;height:34px;border-radius:10px;border:none;background:#238636;color:white;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s;}
+.ai-send-btn:hover{background:#2ea043;}
+@media(max-width:480px){#ai-chat-box{width:calc(100vw - 32px);right:16px;bottom:90px;}#ai-fab{right:16px;bottom:20px;}}
 </style>
 </head>
 <body>
@@ -424,7 +548,6 @@ if (isset($toastMsgs[$uploadMsg])): ?>
     <button onclick="switchTab('fines')"    id="tab-fines"    class="tab-btn pb-3 text-sm font-medium tab-inactive whitespace-nowrap">
         💳 Fine<?php if($totalFineAmt>0): ?> <span class="text-red-400 font-bold">₹<?= $totalFineAmt ?></span><?php endif; ?>
     </button>
-    <button onclick="switchTab('ai')"       id="tab-ai"       class="tab-btn pb-3 text-sm font-medium tab-inactive whitespace-nowrap">🤖 AI Assistant</button>
     <button onclick="switchTab('purchase')" id="tab-purchase" class="tab-btn pb-3 text-sm font-medium tab-inactive whitespace-nowrap">📋 Request a Book</button>
 </div>
 
@@ -461,40 +584,87 @@ if (isset($toastMsgs[$uploadMsg])): ?>
         elseif ($canRequest)  { $btnClass='can';  $btnLabel='Request'; }
         else                  { $btnClass='none'; $btnLabel='Unavailable'; }
     ?>
-    <div class="book-card" data-title="<?= strtolower(htmlspecialchars($b['title'])) ?>" data-author="<?= strtolower(htmlspecialchars($b['author'])) ?>" data-isbn="<?= strtolower(htmlspecialchars($b['isbn']??'')) ?>" data-status="<?= htmlspecialchars($b['status']) ?>" data-cat="<?= htmlspecialchars($b['category']??'') ?>">
+    <?php
+    // Copies pill class
+    $copiesPillClass = $copies > 2 ? 'available' : ($copies > 0 ? 'low' : 'none');
+    $coverSeed = abs($b['id'] * 37 + (int)(crc32($b['title']) % 1000)) % 1000;
+    $coverUrl  = "https://picsum.photos/seed/libbook{$coverSeed}/300/240";
+    $catColors = ['Fiction'=>'#4c1d95','Non-Fiction'=>'#0c4a6e','Academic'=>'#064e3b','Reference'=>'#78350f','Horror'=>'#450a0a','default'=>'#0f172a'];
+    $cat       = $b['category'] ?? 'default';
+    $bgColor   = $catColors[$cat] ?? $catColors['default'];
+    $desc      = $b['description'] ?? '';
+    ?>
+    <div class="book-card"
+         data-title="<?= strtolower(htmlspecialchars($b['title'])) ?>"
+         data-author="<?= strtolower(htmlspecialchars($b['author'])) ?>"
+         data-isbn="<?= strtolower(htmlspecialchars($b['isbn']??'')) ?>"
+         data-status="<?= htmlspecialchars($b['status']) ?>"
+         data-cat="<?= htmlspecialchars($b['category']??'') ?>">
+
+        <!-- Cover image -->
         <div class="book-card-img">
-            <?php
-            // Generate deterministic but varied cover color & seed based on book id
-            $coverSeed = $b['id'] * 37 + crc32($b['title']) % 1000;
-            $coverSeed = abs($coverSeed) % 1000;
-            $coverUrl  = "https://picsum.photos/seed/book{$coverSeed}/300/200";
-            $catColors = ['Fiction'=>'#7c3aed','Non-Fiction'=>'#0369a1','Academic'=>'#047857','Reference'=>'#b45309','default'=>'#1e3a5f'];
-            $cat = $b['category'] ?? 'default';
-            $bgColor = $catColors[$cat] ?? $catColors['default'];
-            ?>
-            <img src="<?= $coverUrl ?>" alt="<?= htmlspecialchars($b['title']) ?>"
+            <img src="<?= $coverUrl ?>"
+                 alt="<?= htmlspecialchars($b['title']) ?>"
                  loading="lazy"
                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
                  style="width:100%;height:100%;object-fit:cover;">
-           
-            <div class="img-placeholder">
-                <i data-lucide="book-open" class="w-8 h-8 opacity-20"></i>
-                <span class="text-xs opacity-30 px-3 text-center leading-tight"><?= htmlspecialchars($b['title']) ?></span>
+            <div class="img-placeholder" style="display:none;background:linear-gradient(160deg,<?= $bgColor ?>,<?= $bgColor ?>99)">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M8 7h6M8 11h8M8 15h5"/></svg>
+                <span style="font-size:.7rem;color:rgba(255,255,255,.5);padding:0 12px;text-align:center;line-height:1.4"><?= htmlspecialchars(substr($b['title'],0,28)) ?></span>
             </div>
-            <span class="copies-pill"><?= $copies ?> copies</span>
-            <span style="position:absolute;bottom:8px;left:8px" class="badge badge-<?= strtolower($b['status']) ?>"><?= $b['status'] ?></span>
+            <!-- Hover overlay gradient -->
+            <div class="book-card-img-overlay"></div>
+            <!-- Copies badge -->
+            <span class="copies-pill <?= $copiesPillClass ?>">
+                <?php if($copies > 0): ?>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M9 3H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5V3zm2 0v16h9a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1h-9z"/></svg>
+                <?= $copies ?> cop<?= $copies===1?'y':'ies' ?>
+                <?php else: ?> Out <?php endif; ?>
+            </span>
+            <!-- Status badge -->
+            <span class="book-status-badge">
+                <span class="badge badge-<?= strtolower($b['status']) ?>"><?= $b['status'] ?></span>
+            </span>
         </div>
+
+        <!-- Card body -->
         <div class="book-card-body">
             <div class="book-card-title"><?= htmlspecialchars($b['title']) ?></div>
-            <div class="book-card-author"><?= htmlspecialchars($b['author']) ?></div>
-            <div class="text-xs mt-1" style="color:var(--muted)">📍 <?= htmlspecialchars($b['shelf']??'—') ?> · <span style="color:var(--blue)"><?= htmlspecialchars($b['category']??'') ?></span></div>
+            <div class="book-card-author">— <?= htmlspecialchars($b['author']) ?></div>
+            <div class="book-card-meta">
+                <?php if(!empty($b['category'])): ?>
+                <span class="book-meta-tag tag-cat"><?= htmlspecialchars($b['category']) ?></span>
+                <?php endif; ?>
+                <?php if(!empty($b['shelf'])): ?>
+                <span class="book-meta-tag tag-shelf">📍 <?= htmlspecialchars($b['shelf']) ?></span>
+                <?php endif; ?>
+            </div>
+            <?php if(!empty($desc)): ?>
+            <div class="book-card-desc"><?= htmlspecialchars($desc) ?></div>
+            <?php else: ?>
+            <div class="book-card-desc" style="-webkit-line-clamp:1;font-style:italic">No description available</div>
+            <?php endif; ?>
         </div>
+
+        <!-- Footer button -->
         <div class="book-card-footer">
             <?php if ($alreadyReq): ?>
-                <button class="btn-req-card done" disabled>✓ Requested</button>
+                <button class="btn-req-card done" disabled>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Already Requested
+                </button>
             <?php else: ?>
-                <form method="POST"><input type="hidden" name="request_book_id" value="<?= $b['id'] ?>">
-                <button type="submit" class="btn-req-card <?= $btnClass ?>" <?= !$canRequest?'disabled':'' ?>><?= $btnLabel ?></button>
+                <form method="POST">
+                    <input type="hidden" name="request_book_id" value="<?= $b['id'] ?>">
+                    <button type="submit" class="btn-req-card <?= $btnClass ?>" <?= !$canRequest?'disabled':'' ?>>
+                        <?php if($canRequest): ?>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                        Request Book
+                        <?php else: ?>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                        Unavailable
+                        <?php endif; ?>
+                    </button>
                 </form>
             <?php endif; ?>
         </div>
@@ -658,71 +828,6 @@ if (isset($toastMsgs[$uploadMsg])): ?>
     <?php endif; ?>
 </div>
 
-<!-- ══ AI ASSISTANT PANE ══════════════════════════════════════════════════════ -->
-<div id="pane-ai" class="hidden">
-    <div class="grid md:grid-cols-2 gap-6">
-
-        <!-- AI Chat -->
-        <div class="ai-bubble">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg" style="background:linear-gradient(135deg,#238636,#58a6ff)">🤖</div>
-                <div><div class="font-bold text-white text-sm">LIBRITE AI</div><div class="text-xs" style="color:var(--muted)">Your personal book assistant</div></div>
-            </div>
-            <div id="aiMessages" class="space-y-2 mb-4 max-h-72 overflow-y-auto">
-                <div class="ai-msg bot">👋 Hi <?= htmlspecialchars($userData['full_name']?:$username) ?>! I'm your library assistant. Ask me anything about books, or I can suggest books based on your reading history!</div>
-            </div>
-            <div class="flex gap-2">
-                <input type="text" id="aiInput" class="dark-input flex-1" placeholder="Ask me about books..." onkeydown="if(event.key==='Enter')sendAI()">
-                <button onclick="sendAI()" class="btn-save px-4">Send</button>
-            </div>
-            <!-- Quick prompts -->
-            <div class="flex gap-2 flex-wrap mt-3">
-                <?php $quickPrompts=['Suggest books for me','What genres are available?','Help me find a classic novel','Books by popular authors']; foreach($quickPrompts as $qp): ?>
-                <button onclick="document.getElementById('aiInput').value='<?= $qp ?>'; sendAI()" class="text-xs px-3 py-1 rounded-full" style="background:rgba(88,166,255,.1);color:#58a6ff;border:1px solid rgba(88,166,255,.2)"><?= $qp ?></button>
-                <?php endforeach; ?>
-            </div>
-        </div>
-
-        <!-- AI Recommendations -->
-        <div>
-            <h3 class="font-bold text-white mb-3 flex items-center gap-2"><i data-lucide="sparkles" class="w-4 h-4 text-yellow-400"></i> Recommended for You</h3>
-            <?php if (empty($aiBooks)): ?>
-            <div class="card p-6 text-center" style="color:var(--muted)">
-                <p class="text-sm">Request some books first and I'll recommend similar ones! 📖</p>
-            </div>
-            <?php else: ?>
-            <div class="space-y-3">
-                <?php foreach ($aiBooks as $ab):
-                    $alreadyReq = in_array($ab['id'], $requestedBookIds ?? []);
-                    $canReq = $ab['copies'] > 0 && !$alreadyReq && $ab['status']==='Available';
-                ?>
-                <div class="card p-4 flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(88,166,255,.1)"><i data-lucide="book" class="w-5 h-5" style="color:#58a6ff"></i></div>
-                        <div>
-                            <div class="font-semibold text-white text-sm"><?= htmlspecialchars($ab['title']) ?></div>
-                            <div class="text-xs" style="color:var(--muted)"><?= htmlspecialchars($ab['author']) ?> · <?= htmlspecialchars($ab['category']??'') ?></div>
-                        </div>
-                    </div>
-                    <?php if ($alreadyReq): ?>
-                        <span class="badge badge-pending text-xs">Requested</span>
-                    <?php elseif ($canReq): ?>
-                        <form method="POST"><input type="hidden" name="request_book_id" value="<?= $ab['id'] ?>"><button type="submit" class="btn-save text-xs px-3 py-1.5">Request</button></form>
-                    <?php else: ?>
-                        <span class="badge badge-borrowed text-xs">Unavailable</span>
-                    <?php endif; ?>
-                </div>
-                <?php endforeach; ?>
-            </div>
-            <?php endif; ?>
-            <?php if (!empty($lastCats)): ?>
-            <div class="mt-4 p-3 rounded-lg text-xs" style="background:rgba(35,134,54,.08);border:1px solid rgba(35,134,54,.2);color:var(--muted)">
-                Based on your interest in: <strong class="text-emerald-400"><?= implode(', ', $lastCats) ?></strong>
-            </div>
-            <?php endif; ?>
-        </div>
-    </div>
-</div>
 
 <!-- ══ BOOK PURCHASE REQUEST PANE ══════════════════════════════════════════════ -->
 <div id="pane-purchase" class="hidden">
@@ -805,141 +910,291 @@ if (isset($toastMsgs[$uploadMsg])): ?>
 </div><!-- /container -->
 
 <!-- AI Chat Script -->
+<!-- ══ FLOATING AI CHATBOT ═══════════════════════════════════════════════════ -->
+<!-- FAB button -->
+<a href="chat_bot.php" id="ai-fab" title="Open LIBRITE AI Assistant" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">
+    🤖
+    <div class="notif-dot"></div>
+</a>
+
+<!-- Chat box -->
+<div id="ai-chat-box">
+    <div class="ai-chat-header">
+        <div class="flex items-center gap-3">
+            <div class="ai-chat-avatar">🤖</div>
+            <div>
+                <div class="ai-chat-title">LIBRITE AI</div>
+                <div class="ai-chat-status">Online · Ready to help</div>
+            </div>
+        </div>
+        <button class="ai-close-btn" onclick="toggleAIChat()">✕</button>
+    </div>
+
+    <div class="ai-messages" id="aiMessages">
+        <div class="ai-msg-bot">👋 Hi <?= htmlspecialchars($userData['full_name']?:$username) ?>! I'm LIBRITE AI.<br><br>I can help you:<br>📚 Find & describe books<br>✨ Suggest reads for you<br>💳 Explain fines & rules<br><br>Ask me anything!</div>
+    </div>
+
+    <div class="ai-quick-pills" id="aiQuickPills">
+        <span class="ai-pill" onclick="aiQuick('Suggest books for me')">✨ Suggest books</span>
+        <span class="ai-pill" onclick="aiQuick('What genres do you have?')">📂 Genres</span>
+        <span class="ai-pill" onclick="aiQuick('Explain the fine system')">💰 Fines</span>
+        <span class="ai-pill" onclick="aiQuick('How long can I borrow?')">📅 Loan rules</span>
+    </div>
+
+    <div class="ai-input-row">
+        <input type="text" class="ai-text-input" id="aiFloatInput"
+               placeholder="Ask about books, fines, rules..."
+               onkeydown="if(event.key==='Enter')sendFloatAI()">
+        <button class="ai-send-btn" onclick="sendFloatAI()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+    </div>
+</div>
+
 <script>
 lucide.createIcons();
 
-const BOOKS_DATA = <?= json_encode(array_map(fn($b)=>['title'=>$b['title'],'author'=>$b['author'],'category'=>$b['category']??'','status'=>$b['status'],'copies'=>(int)($b['copies']??0),'shelf'=>$b['shelf']??''], $books)) ?>;
-const USER_CATS  = <?= json_encode($lastCats) ?>;
+const BOOKS_DATA = <?= json_encode(array_map(fn($b)=>[
+    'id'         => $b['id'],
+    'title'      => $b['title'],
+    'author'     => $b['author'],
+    'category'   => $b['category'] ?? '',
+    'status'     => $b['status'],
+    'copies'     => (int)($b['copies'] ?? 0),
+    'shelf'      => $b['shelf'] ?? '',
+    'description'=> $b['description'] ?? '',
+    'isbn'       => $b['isbn'] ?? '',
+], $books)) ?>;
+const USER_CATS = <?= json_encode($lastCats) ?>;
+const USER_NAME = "<?= htmlspecialchars($userData['full_name']?:$username) ?>";
 
-function sendAI() {
-    const input = document.getElementById('aiInput');
+// ── Floating AI Chat ──────────────────────────────────────────────────────────
+// AI chat box handled on chatbot.php page
+
+function aiQuick(msg) {
+    document.getElementById('aiFloatInput').value = msg;
+    sendFloatAI();
+    document.getElementById('aiQuickPills').style.display = 'none';
+}
+
+function sendFloatAI() {
+    const input = document.getElementById('aiFloatInput');
     const msg   = input.value.trim();
     if (!msg) return;
-    appendMsg(msg, 'user');
+    appendAIMsg(msg, 'user');
     input.value = '';
-    const typing = appendTyping();
+    const typing = appendAITyping();
     setTimeout(() => {
         typing.remove();
-        appendMsg(getAIReply(msg), 'bot');
-    }, 800);
+        const reply = getAIReply(msg);
+        if (typeof reply === 'string') {
+            appendAIMsg(reply, 'bot');
+        } else {
+            // Array of {text, books}
+            appendAIMsg(reply.text, 'bot');
+            if (reply.books && reply.books.length) {
+                reply.books.forEach(b => appendAIBookCard(b));
+            }
+        }
+    }, 700 + Math.random() * 400);
+}
+
+function appendAIMsg(text, type) {
+    const box = document.getElementById('aiMessages');
+    const el  = document.createElement('div');
+    el.className = type === 'user' ? 'ai-msg-user' : 'ai-msg-bot';
+    el.style.whiteSpace = 'pre-line';
+    el.textContent = text;
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+    return el;
+}
+
+function appendAITyping() {
+    const box = document.getElementById('aiMessages');
+    const el  = document.createElement('div');
+    el.className = 'ai-typing-indicator';
+    el.innerHTML = '<span></span><span></span><span></span>';
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+    return el;
+}
+
+function appendAIBookCard(book) {
+    const box = document.getElementById('aiMessages');
+    const el  = document.createElement('div');
+    el.className = 'ai-book-card';
+    const coverSeed = (book.id * 37) % 1000;
+    const desc = book.description ? book.description.substring(0, 100) + (book.description.length > 100 ? '…' : '') : '';
+    el.innerHTML = \`
+        <div style="display:flex;gap:10px;align-items:flex-start">
+            <img src="https://picsum.photos/seed/book\${coverSeed}/50/70"
+                 style="width:40px;height:55px;object-fit:cover;border-radius:5px;flex-shrink:0"
+                 onerror="this.style.display='none'">
+            <div style="flex:1;min-width:0">
+                <div class="ai-book-card-title">\${book.title}</div>
+                <div class="ai-book-card-meta">by \${book.author} · \${book.category} · \${book.copies} cop\${book.copies!==1?'ies':'y'} · Shelf: \${book.shelf||'—'}</div>
+                \${desc ? \`<div class="ai-book-desc">\${desc}</div>\` : ''}
+                <div style="margin-top:6px">
+                    <span class="ai-pill" style="font-size:.65rem;padding:2px 8px" onclick="document.getElementById('searchInput').value='\${book.title}';switchTab('browse');filterBooks()">🔍 Find in library</span>
+                </div>
+            </div>
+        </div>
+    \`;
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
 }
 
 function getAIReply(msg) {
     const q = msg.toLowerCase();
-    // Suggestions
-    if (q.includes('suggest') || q.includes('recommend') || q.includes('what should')) {
-        const avail = BOOKS_DATA.filter(b => b.status === 'Available' && b.copies > 0);
+
+    // ── Book description request ──────────────────────────────────────────────
+    if (q.includes('describe') || q.includes('about the book') || q.includes('tell me about') || q.includes('what is') || q.includes('summary')) {
+        // Try to match a book title in the query
+        const matched = BOOKS_DATA.filter(b => q.includes(b.title.toLowerCase()));
+        if (matched.length > 0) {
+            const b = matched[0];
+            const desc = b.description || 'No description available in our records.';
+            return { text: `📖 Here's about "${b.title}" by ${b.author}:
+
+${desc}
+
+Category: ${b.category} | Shelf: ${b.shelf||'—'} | Status: ${b.status}`, books: [] };
+        }
+        // No match — search for partial
+        const words = q.split(' ').filter(w => w.length > 3);
+        const partial = BOOKS_DATA.filter(b => words.some(w => b.title.toLowerCase().includes(w)));
+        if (partial.length > 0) {
+            return { text: `I found ${partial.length} book(s) that might match. Here's what I know:`, books: partial.slice(0,3) };
+        }
+        return "I couldn't find that book. Try searching in the Browse Books tab, or tell me the exact title!";
+    }
+
+    // ── Suggest / Recommend ───────────────────────────────────────────────────
+    if (q.includes('suggest') || q.includes('recommend') || q.includes('what should i read') || q.includes('good book')) {
+        const avail = BOOKS_DATA.filter(b => b.copies > 0 && b.status === 'Available');
         if (USER_CATS.length > 0) {
             const matched = avail.filter(b => USER_CATS.includes(b.category));
-            if (matched.length > 0) {
-                const picks = matched.sort(()=>Math.random()-.5).slice(0,3);
-                return `Based on your reading history (${USER_CATS.join(', ')}), I suggest:\n\n` + picks.map(b=>`📖 "${b.title}" by ${b.author} — Shelf: ${b.shelf}`).join('\n');
-            }
+            const picks   = matched.length >= 2 ? matched : avail;
+            const chosen  = picks.sort(() => Math.random() - .5).slice(0, 3);
+            return {
+                text: USER_CATS.length
+                    ? `Based on your interest in ${USER_CATS.join(', ')}, here are ${chosen.length} picks for you ✨`
+                    : `Here are some great books available right now ✨`,
+                books: chosen
+            };
         }
-        const picks = avail.sort(()=>Math.random()-.5).slice(0,3);
-        return picks.length ? `Here are some available books:\n\n` + picks.map(b=>`📖 "${b.title}" by ${b.author}`).join('\n') : "No books available right now. Check back soon!";
+        const picks = avail.sort(() => Math.random() - .5).slice(0, 3);
+        return picks.length
+            ? { text: `Here are some books available right now ✨`, books: picks }
+            : "No books are available right now. Check back soon!";
     }
-    // Genre search
-    if (q.includes('genre') || q.includes('categor')) {
-        const cats = [...new Set(BOOKS_DATA.map(b=>b.category).filter(Boolean))];
-        return `We have books in: ${cats.join(', ')}. Which interests you? I can suggest specific titles!`;
-    }
-    // Author search
-    if (q.includes('author') || q.includes('written by') || q.includes('by ')) {
-        const words = q.split(' ');
-        const byIdx = words.indexOf('by');
-        const search = byIdx >= 0 ? words.slice(byIdx+1).join(' ') : msg;
-        const found = BOOKS_DATA.filter(b => b.author.toLowerCase().includes(search.toLowerCase()) && b.copies > 0);
-        return found.length ? `Found ${found.length} book(s):\n\n` + found.slice(0,4).map(b=>`📖 "${b.title}" — ${b.status}`).join('\n') : `I couldn't find books by that author. Try the search tab!`;
-    }
-    // Find a book
-    if (q.includes('find') || q.includes('looking for') || q.includes('search')) {
-        return "Use the 🔍 search bar in the Browse Books tab! You can search by title, author, or ISBN. I can also suggest books — just say 'suggest books for me'!";
-    }
-    // Fine help
-    if (q.includes('fine') || q.includes('overdue') || q.includes('pay')) {
-        return "💳 Fines are ₹20 for the first overdue day, then +₹10 every 2 extra days. Go to the Fine Management tab to pay via QR code or UPI ID. After paying, submit your screenshot for admin verification!";
-    }
-    // Classic novels
-    if (q.includes('classic')) {
-        const classics = BOOKS_DATA.filter(b => b.category==='Fiction' && b.copies>0).slice(0,3);
-        return classics.length ? `Here are some fiction books available:\n\n` + classics.map(b=>`📖 "${b.title}" by ${b.author}`).join('\n') : "Check the Fiction category in Browse Books!";
-    }
-    // Loan info
-    if (q.includes('loan') || q.includes('borrow') || q.includes('how long') || q.includes('days')) {
-        return "📅 You can borrow books for **4 days**. After that, fines apply: ₹20 for day 1, then +₹10 every 2 days. Make sure to return on time!";
-    }
-    // Greeting
-    if (q.includes('hi') || q.includes('hello') || q.includes('hey')) {
-        return `Hello! 👋 I'm LIBRITE AI. I can help you find books, suggest reads based on your history, or answer library questions. What would you like?`;
-    }
-    // Default
-    return `I can help with:\n• 📚 Book suggestions ("suggest books for me")\n• 🔍 Finding books by author/genre\n• 💳 Fine & payment info\n• 📅 Borrowing rules\n\nWhat would you like to know?`;
-}
 
-function appendMsg(text, type) {
-    const div = document.getElementById('aiMessages');
-    const el = document.createElement('div');
-    el.className = `ai-msg ${type}`;
-    el.style.whiteSpace = 'pre-line';
-    el.textContent = text;
-    div.appendChild(el);
-    div.scrollTop = div.scrollHeight;
-    return el;
-}
-function appendTyping() {
-    const div = document.getElementById('aiMessages');
-    const el = document.createElement('div');
-    el.className = 'ai-msg bot ai-typing';
-    el.innerHTML = '<span></span><span></span><span></span>';
-    div.appendChild(el);
-    div.scrollTop = div.scrollHeight;
-    return el;
-}
+    // ── Search by author ──────────────────────────────────────────────────────
+    if (q.includes('by ') || q.includes('author') || q.includes('written by')) {
+        const byMatch = q.match(/by\s+(.+)/);
+        const searchName = byMatch ? byMatch[1].replace(/[?.!]/g,'').trim() : '';
+        if (searchName.length > 2) {
+            const found = BOOKS_DATA.filter(b => b.author.toLowerCase().includes(searchName));
+            if (found.length > 0) {
+                return { text: `Found ${found.length} book(s) by "${searchName}":`, books: found.slice(0,4) };
+            }
+            return `I couldn't find books by "${searchName}" in our library. Try the search bar in Browse Books!`;
+        }
+        return "Who's the author you're looking for? Try: "books by Chetan Bhagat"";
+    }
 
-// Profile
-function openProfile() { document.getElementById('profilePanel').classList.add('open'); document.getElementById('panelOverlay').classList.add('open'); document.body.style.overflow='hidden'; lucide.createIcons(); }
-function closeProfile() { document.getElementById('profilePanel').classList.remove('open'); document.getElementById('panelOverlay').classList.remove('open'); document.body.style.overflow=''; }
-function switchProfileTab(t) {
-    ['view','edit'].forEach(n=>{
-        document.getElementById('ppane-'+n).classList.toggle('hidden',n!==t);
-        document.getElementById('ptab-'+n).classList.toggle('tab-active',n===t);
-        document.getElementById('ptab-'+n).classList.toggle('tab-inactive',n!==t);
-    }); lucide.createIcons();
-}
-function previewPhoto(input) {
-    if(input.files&&input.files[0]){const r=new FileReader();r.onload=e=>{document.getElementById('photoPreviewImg')&&(document.getElementById('photoPreviewImg').src=e.target.result);};r.readAsDataURL(input.files[0]);document.getElementById('fileLabel').textContent=input.files[0].name;}
-}
+    // ── Genre / Category ──────────────────────────────────────────────────────
+    if (q.includes('genre') || q.includes('categor') || q.includes('fiction') || q.includes('academic') || q.includes('reference') || q.includes('non-fiction')) {
+        const cats = [...new Set(BOOKS_DATA.map(b => b.category).filter(Boolean))];
+        let targetCat = null;
+        if (q.includes('fiction') && !q.includes('non')) targetCat = 'Fiction';
+        else if (q.includes('non-fiction') || q.includes('nonfiction')) targetCat = 'Non-Fiction';
+        else if (q.includes('academic')) targetCat = 'Academic';
+        else if (q.includes('reference')) targetCat = 'Reference';
 
-// Tabs
-function switchTab(t) {
-    ['browse','requests','fines','ai','purchase'].forEach(n=>{
-        document.getElementById('pane-'+n).classList.toggle('hidden',n!==t);
-        document.getElementById('tab-'+n).classList.toggle('tab-active',n===t);
-        document.getElementById('tab-'+n).classList.toggle('tab-inactive',n!==t);
-    });
+        if (targetCat) {
+            const catBooks = BOOKS_DATA.filter(b => b.category === targetCat && b.copies > 0).slice(0, 3);
+            return catBooks.length
+                ? { text: `Here are some ${targetCat} books available:`, books: catBooks }
+                : `No ${targetCat} books available right now.`;
+        }
+        return `We have books in: ${cats.join(', ')}.
+
+Just ask me like: "show me Fiction books" or "suggest Academic books"!`;
+    }
+
+    // ── Fine system ───────────────────────────────────────────────────────────
+    if (q.includes('fine') || q.includes('overdue') || q.includes('penalty') || q.includes('late')) {
+        return "💰 Fine System:
+
+• Loan period: 4 days
+• Fine: ₹10 per day after due date
+• Example: 5 days late = ₹50 fine
+
+To pay: Go to the 💳 Fine tab → scan QR or copy UPI ID → submit payment screenshot for admin verification.";
+    }
+
+    // ── Loan rules ────────────────────────────────────────────────────────────
+    if (q.includes('borrow') || q.includes('loan') || q.includes('how long') || q.includes('days') || q.includes('rules')) {
+        return "📅 Borrowing Rules:
+
+• Max loan period: 4 days
+• Return on time to avoid ₹10/day fine
+• Request books from Browse Books tab
+• Admin approves within 1-2 days
+• Collect from library counter once approved";
+    }
+
+    // ── Available books count ─────────────────────────────────────────────────
+    if (q.includes('how many') || q.includes('total books') || q.includes('available')) {
+        const avail  = BOOKS_DATA.filter(b => b.copies > 0 && b.status === 'Available').length;
+        const total  = BOOKS_DATA.length;
+        return `📚 Library Stats:
+
+• Total books: ${total}
+• Currently available: ${avail}
+• Borrowed/unavailable: ${total - avail}
+
+Browse all books in the Browse Books tab!`;
+    }
+
+    // ── Popular / trending ────────────────────────────────────────────────────
+    if (q.includes('popular') || q.includes('trending') || q.includes('best')) {
+        const avail = BOOKS_DATA.filter(b => b.copies > 0 && b.status === 'Available');
+        const picks = avail.sort(() => Math.random() - .5).slice(0, 3);
+        return picks.length
+            ? { text: `Here are some popular picks from our collection 🔥`, books: picks }
+            : "No books available right now!";
+    }
+
+    // ── Greeting ──────────────────────────────────────────────────────────────
+    if (q.includes('hi') || q.includes('hello') || q.includes('hey') || q.includes('hii')) {
+        return `Hello ${USER_NAME}! 👋 I'm LIBRITE AI.
+
+I can help you:
+📚 Suggest & describe books
+🔍 Search by author or genre
+💰 Explain fines & loan rules
+
+What are you looking for today?`;
+    }
+
+    // ── Thank you ──────────────────────────────────────────────────────────────
+    if (q.includes('thank') || q.includes('thanks')) {
+        return "You're welcome! 😊 Happy reading! Come back anytime you need help finding a book.";
+    }
+
+    // ── Default ───────────────────────────────────────────────────────────────
+    return `I didn't quite get that 🤔
+
+Try asking:
+• "Suggest books for me"
+• "Describe Atomic Habits"
+• "Books by Shakespeare"
+• "Show me Fiction books"
+• "How does the fine system work?"`;
 }
-function setPayTab(t) {
-    ['qr','upi'].forEach(n=>{
-        const p=document.getElementById('ppay-'+n);
-        const b=document.getElementById('ptab-'+n);
-        if(p)p.classList.toggle('hidden',n!==t);
-        if(b){b.classList.toggle('active',n===t);b.classList.toggle('inactive',n!==t);}
-    });
-}
-function copyUPI() { navigator.clipboard.writeText(document.getElementById('upiIdText')?.textContent||'').then(()=>showToast('✅ UPI ID copied!','#238636')); }
-function filterBooks() {
-    const s=document.getElementById('searchInput').value.toLowerCase();
-    const st=document.getElementById('statusFilter').value;
-    const cat=document.getElementById('catFilter').value;
-    let n=0;
-    document.querySelectorAll('#booksGrid .book-card').forEach(card=>{
-        const ok=(card.dataset.title.includes(s)||card.dataset.author.includes(s)||card.dataset.isbn.includes(s))&&(st==='All'||card.dataset.status===st)&&(cat==='All'||card.dataset.cat===cat);
-        card.style.display=ok?'':'none'; if(ok)n++;
-    });
-    document.getElementById('recordCount').innerText=`Showing ${n} books`;
-}
-function showToast(msg,color='#238636'){const t=document.getElementById('toast');t.textContent=msg;t.style.background=color;t.style.color='white';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
 
 <?php if(empty($userData['full_name'])): ?>setTimeout(()=>{openProfile();switchProfileTab('edit');},700);<?php endif; ?>
 </script>
