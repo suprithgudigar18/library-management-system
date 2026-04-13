@@ -172,6 +172,7 @@ $pendingPayments = $pdo->query("SELECT COUNT(*) FROM fine_payments WHERE status=
             <span style="background:#ef4444;color:white;font-size:.65rem;padding:1px 6px;border-radius:10px;margin-left:6px;"><?= $pendingPayments + $pendingPurchaseCount ?></span>
             <?php endif; ?>
         </a>
+        <a href="report.php"    class="nav-item"><i class="fas fa-chart-bar"></i> Reports & Analytics</a>
         <a href="admin_forgot_password.php" class="nav-item"><i class="fas fa-lock"></i> Change Password</a>
         <a href="index.php" class="nav-item" style="margin-top:2rem;color:#ff6b6b;"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </aside>
@@ -224,6 +225,9 @@ $pendingPayments = $pdo->query("SELECT COUNT(*) FROM fine_payments WHERE status=
                 <i class="fas fa-credit-card"></i>Payments & Orders
                 <?php if ($pendingPayments + $pendingPurchaseCount > 0): ?><span class="badge-count"><?= $pendingPayments + $pendingPurchaseCount ?></span><?php endif; ?>
             </a>
+            <a href="report.php" class="action-btn">
+    <i class="fas fa-chart-bar"></i>Reports & Analytics
+</a>
             <a href="change_password.php" class="action-btn"><i class="fas fa-lock"></i>Change Password</a>
         </div>
 

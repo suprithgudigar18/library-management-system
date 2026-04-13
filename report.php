@@ -26,10 +26,10 @@ $totalOverdue   = $pdo->query("SELECT COUNT(*) FROM book_requests WHERE status='
 // Borrowing trend (last 30 days or selected range)
 $days = min((int)$range ?: 30, 365);
 $borrowTrend = $pdo->query("
-    SELECT DATE(created_at) as day, COUNT(*) as cnt
+  SELECT COUNT(*) FROM users as day, COUNT(*) as cnt
     FROM book_requests
     WHERE created_at >= DATE_SUB(NOW(), INTERVAL {$days} DAY)
-    GROUP BY DATE(created_at)
+    GROUP BY DATE(registered_at)
     ORDER BY day ASC
 ")->fetchAll(PDO::FETCH_ASSOC);
 

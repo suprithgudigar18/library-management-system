@@ -15,7 +15,6 @@ $toastType = 'success';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    // DELETE
     if ($action === 'delete') {
         $id = (int)($_POST['id'] ?? 0);
         if ($id > 0) {
@@ -24,7 +23,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $toastType = 'error';
         }
 
-    // ADD
     } elseif ($action === 'add') {
         $name     = trim($_POST['name']       ?? '');
         $username = trim($_POST['username']   ?? '');
@@ -35,7 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $status   = trim($_POST['status']     ?? 'Active');
         $password = $_POST['password']        ?? 'changeme123';
 
-        // Check username uniqueness
         $chk = $pdo->prepare("SELECT id FROM users WHERE username = ?");
         $chk->execute([$username]);
         if ($chk->fetch()) {
@@ -49,7 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $toast = "Member added successfully.";
         }
 
-    // EDIT
     } elseif ($action === 'edit') {
         $id     = (int)($_POST['id']    ?? 0);
         $name   = trim($_POST['name']   ?? '');
@@ -66,11 +62,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// ── Fetch all users from DB ────────────────────────────────────────────────
+// ── Fetch all users, sorted alphabetically by name ─────────────────────────
 $users = $pdo->query("SELECT id, name, username, email, dept, member_type, year, status
-                       FROM users ORDER BY id DESC")->fetchAll();
+                       FROM users
+                       WHERE role='user'
+                       ORDER BY name ASC")->fetchAll();
 
-// Helper: initials & avatar colour
+// ── Split into Faculty vs Students/Staff ──────────────────────────────────
+// Treat "Teacher" and "Faculty" as the same group
+$facultyTypes = ['Faculty', 'Teacher'];
+$faculty  = array_filter($users, fn($u) => in_array($u['member_type'] ?? '', $facultyTypes));
+$students = array_filter($users, fn($u) => !in_array($u['member_type'] ?? '', $facultyTypes));
+
+// Helper functions
 function getInitials($name) {
     $parts = explode(' ', trim($name));
     if (count($parts) >= 2) return strtoupper($parts[0][0] . $parts[1][0]);
@@ -86,6 +90,78 @@ function getStatusBadgeClasses($status) {
         ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
         : 'bg-red-100 text-red-700 border-red-200';
 }
+
+// Render a table section (Faculty or Students)
+function renderSection($rows, $avatarColors, $sectionIndex = 0) {
+    if (empty($rows)): ?>
+    <tr>
+        <td colspan="6" class="text-center py-10 text-slate-400">
+            <p class="text-sm">No members in this category yet.</p>
+        </td>
+    </tr>
+    <?php return; endif;
+
+    foreach ($rows as $i => $u):
+        $initials  = getInitials($u['name'] ?: $u['username']);
+        $avatarCls = $avatarColors[($sectionIndex + $i) % count($avatarColors)];
+        $dept      = $u['dept']        ?? '—';
+        $mtype     = $u['member_type'] ?? 'Student';
+        $year      = $u['year']        ?? 'N/A';
+        $status    = $u['status']      ?? 'Active';
+        $dataJson  = htmlspecialchars(json_encode([
+            'id'     => $u['id'],
+            'name'   => $u['name'],
+            'dept'   => $dept,
+            'type'   => $mtype,
+            'year'   => $year,
+            'status' => $status,
+        ]), ENT_QUOTES, 'UTF-8');
+    ?>
+    <tr class="hover:bg-slate-50 transition-colors group user-row"
+        data-name="<?= strtolower(htmlspecialchars($u['name'] . ' ' . $u['username'])) ?>"
+        data-dept="<?= strtolower(htmlspecialchars($dept)) ?>"
+        data-type="<?= htmlspecialchars($mtype) ?>"
+        data-status="<?= htmlspecialchars($status) ?>">
+
+        <td class="px-6 py-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full <?= $avatarCls ?> flex items-center justify-center font-bold text-sm flex-shrink-0 border">
+                    <?= $initials ?>
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-semibold text-slate-800"><?= htmlspecialchars($u['name'] ?: $u['username']) ?></span>
+                    <span class="text-xs text-slate-400 font-mono">@<?= htmlspecialchars($u['username']) ?></span>
+                </div>
+            </div>
+        </td>
+        <td class="px-6 py-4 text-slate-600 text-sm"><?= htmlspecialchars($u['email'] ?: '—') ?></td>
+        <td class="px-6 py-4 text-slate-700"><?= htmlspecialchars($dept) ?></td>
+        <td class="px-6 py-4">
+            <div class="flex flex-col">
+                <span class="text-slate-700"><?= htmlspecialchars($mtype) ?></span>
+                <span class="text-xs text-slate-500 mt-0.5"><?= htmlspecialchars($year) ?></span>
+            </div>
+        </td>
+        <td class="px-6 py-4">
+            <span class="px-2.5 py-1 rounded-full text-xs font-medium border <?= getStatusBadgeClasses($status) ?>">
+                <?= htmlspecialchars($status) ?>
+            </span>
+        </td>
+        <td class="px-6 py-4 text-right">
+            <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onclick='openModal(<?= $dataJson ?>)'
+                    class="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
+                    <i data-lucide="edit-2" class="w-4 h-4"></i>
+                </button>
+                <button onclick="confirmDelete(<?= $u['id'] ?>, '<?= htmlspecialchars($u['name'] ?: $u['username'], ENT_QUOTES) ?>')"
+                    class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </td>
+    </tr>
+    <?php endforeach;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -99,6 +175,16 @@ function getStatusBadgeClasses($status) {
         .toast { animation: slideIn .4s ease, fadeOut .5s ease 3s forwards; }
         @keyframes slideIn { from { transform:translateY(20px); opacity:0; } to { transform:translateY(0); opacity:1; } }
         @keyframes fadeOut { to { opacity:0; pointer-events:none; } }
+
+        /* Section divider header row */
+        .section-header-row td {
+            background: linear-gradient(to right, #f8fafc, #f1f5f9);
+            border-top: 2px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .section-header-row:first-child td {
+            border-top: none;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-900">
@@ -124,9 +210,7 @@ function getStatusBadgeClasses($status) {
         <span class="text-sm text-slate-500 hidden sm:block">
             Welcome, <?= htmlspecialchars($_SESSION['username']) ?>
         </span>
-        <<a href="admin_dashboard.php" class="text-xs text-red-500 hover:underline" style="font-weight: bold;">
-    Back
-</a>
+        <a href="admin_dashboard.php" class="text-xs text-red-500 hover:underline font-bold">Back</a>
         <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold border border-blue-200 text-xs">
             AD
         </div>
@@ -139,7 +223,14 @@ function getStatusBadgeClasses($status) {
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
             <h2 class="text-2xl font-bold text-slate-800">Manage Users</h2>
-            <p class="text-slate-500">All registered library members. Total: <strong><?= count($users) ?></strong></p>
+            <p class="text-slate-500">
+                All registered library members, sorted alphabetically. Total:
+                <strong><?= count($users) ?></strong>
+                &nbsp;·&nbsp;
+                <span class="text-indigo-600 font-semibold"><?= count($faculty) ?> Faculty</span>
+                &nbsp;·&nbsp;
+                <span class="text-blue-600 font-semibold"><?= count($students) ?> Students / Staff</span>
+            </p>
         </div>
         <button onclick="openModal()" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm">
             <i data-lucide="user-plus" class="w-5 h-5"></i> Add New Member
@@ -169,7 +260,7 @@ function getStatusBadgeClasses($status) {
         </select>
     </div>
 
-    <!-- Table -->
+    <!-- ═══ SINGLE TABLE with two visual sections ════════════════════════════ -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse" id="usersTable">
@@ -178,86 +269,57 @@ function getStatusBadgeClasses($status) {
                         <th class="px-6 py-4 font-semibold">Member Details</th>
                         <th class="px-6 py-4 font-semibold">Contact / Phone</th>
                         <th class="px-6 py-4 font-semibold">Department</th>
-                        <th class="px-6 py-4 font-semibold">Type & Year</th>
+                        <th class="px-6 py-4 font-semibold">Type &amp; Year</th>
                         <th class="px-6 py-4 font-semibold">Status</th>
                         <th class="px-6 py-4 font-semibold text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100" id="usersTbody">
-                <?php if (empty($users)): ?>
-                    <tr>
-                        <td colspan="6" class="text-center py-16 text-slate-400">
-                            <i data-lucide="users" class="w-10 h-10 mx-auto mb-3 opacity-30"></i>
-                            <p>No registered users yet.</p>
-                        </td>
-                    </tr>
-                <?php else: ?>
-                    <?php foreach ($users as $i => $u):
-                        $initials   = getInitials($u['name'] ?: $u['username']);
-                        $avatarCls  = $avatarColors[$i % count($avatarColors)];
-                        $dept       = $u['dept']        ?? '—';
-                        $mtype      = $u['member_type'] ?? 'Student';
-                        $year       = $u['year']        ?? 'N/A';
-                        $status     = $u['status']      ?? 'Active';
-                        $dataJson   = htmlspecialchars(json_encode([
-                            'id'     => $u['id'],
-                            'name'   => $u['name'],
-                            'dept'   => $dept,
-                            'type'   => $mtype,
-                            'year'   => $year,
-                            'status' => $status,
-                        ]), ENT_QUOTES, 'UTF-8');
-                    ?>
-                    <tr class="hover:bg-slate-50 transition-colors group user-row"
-                        data-name="<?= strtolower(htmlspecialchars($u['name'] . ' ' . $u['username'])) ?>"
-                        data-dept="<?= strtolower(htmlspecialchars($dept)) ?>"
-                        data-type="<?= htmlspecialchars($mtype) ?>"
-                        data-status="<?= htmlspecialchars($status) ?>">
 
-                        <td class="px-6 py-4">
+                    <!-- ══ FACULTY SECTION ══════════════════════════════════ -->
+                    <tr class="section-header-row" id="section-faculty-header">
+                        <td colspan="6" class="px-6 py-3">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full <?= $avatarCls ?> flex items-center justify-center font-bold text-sm flex-shrink-0">
-                                    <?= $initials ?>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center">
+                                        <i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-indigo-600"></i>
+                                    </div>
+                                    <span class="text-sm font-bold text-indigo-700 tracking-wide uppercase">Faculty Members</span>
                                 </div>
-                                <div class="flex flex-col">
-                                    <span class="font-semibold text-slate-800"><?= htmlspecialchars($u['name'] ?: $u['username']) ?></span>
-                                    <span class="text-xs text-slate-400 font-mono">@<?= htmlspecialchars($u['username']) ?></span>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-slate-600 text-sm"><?= htmlspecialchars($u['email'] ?: '—') ?></td>
-                        <td class="px-6 py-4 text-slate-700"><?= htmlspecialchars($dept) ?></td>
-                        <td class="px-6 py-4">
-                            <div class="flex flex-col">
-                                <span class="text-slate-700"><?= htmlspecialchars($mtype) ?></span>
-                                <span class="text-xs text-slate-500 mt-0.5"><?= htmlspecialchars($year) ?></span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <span class="px-2.5 py-1 rounded-full text-xs font-medium border <?= getStatusBadgeClasses($status) ?>">
-                                <?= htmlspecialchars($status) ?>
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onclick='openModal(<?= $dataJson ?>)'
-                                    class="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
-                                    <i data-lucide="edit-2" class="w-4 h-4"></i>
-                                </button>
-                                <button onclick="confirmDelete(<?= $u['id'] ?>, '<?= htmlspecialchars($u['name'] ?: $u['username'], ENT_QUOTES) ?>')"
-                                    class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
+                                <span class="text-xs bg-indigo-100 text-indigo-600 font-semibold px-2.5 py-0.5 rounded-full border border-indigo-200">
+                                    <?= count($faculty) ?> member<?= count($faculty) !== 1 ? 's' : '' ?>
+                                </span>
+                                <span class="text-xs text-slate-400 ml-auto italic">Sorted A → Z</span>
                             </div>
                         </td>
                     </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
+                    <?php renderSection($faculty, $avatarColors, 0); ?>
+
+                    <!-- ══ STUDENTS / STAFF SECTION ═════════════════════════ -->
+                    <tr class="section-header-row" id="section-students-header">
+                        <td colspan="6" class="px-6 py-3">
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                                        <i data-lucide="book-open" class="w-3.5 h-3.5 text-blue-600"></i>
+                                    </div>
+                                    <span class="text-sm font-bold text-blue-700 tracking-wide uppercase">Students &amp; Staff</span>
+                                </div>
+                                <span class="text-xs bg-blue-100 text-blue-600 font-semibold px-2.5 py-0.5 rounded-full border border-blue-200">
+                                    <?= count($students) ?> member<?= count($students) !== 1 ? 's' : '' ?>
+                                </span>
+                                <span class="text-xs text-slate-400 ml-auto italic">Sorted A → Z</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php renderSection($students, $avatarColors, count($faculty)); ?>
+
                 </tbody>
             </table>
         </div>
-        <div class="px-6 py-3 border-t border-slate-200 bg-slate-50 text-sm text-slate-500">
+        <div class="px-6 py-3 border-t border-slate-200 bg-slate-50 text-sm text-slate-500 flex items-center justify-between">
             <span id="recordCount">Showing <?= count($users) ?> members</span>
+            <span class="text-xs text-slate-400">Listed alphabetically within each section</span>
         </div>
     </div>
 </main>
@@ -280,7 +342,6 @@ function getStatusBadgeClasses($status) {
                 <input type="hidden" name="action" id="formAction" value="add">
                 <input type="hidden" name="id"     id="inp_id"     value="">
 
-                <!-- Name + Username (shown in Add mode only) -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Full Name <span class="text-red-500">*</span></label>
@@ -296,7 +357,6 @@ function getStatusBadgeClasses($status) {
                     </div>
                 </div>
 
-                <!-- Phone + Password (Add mode only) -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="addOnlyFields">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
@@ -312,7 +372,6 @@ function getStatusBadgeClasses($status) {
                     </div>
                 </div>
 
-                <!-- Dept -->
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Department</label>
                     <select name="dept" id="inp_dept"
@@ -394,29 +453,27 @@ lucide.createIcons();
 
 // ── Modal: Add / Edit ──────────────────────────────────────────────────────
 function openModal(user = null) {
-    const modal  = document.getElementById('userModal');
+    const modal   = document.getElementById('userModal');
     const addOnly = document.getElementById('addOnlyFields');
     const uField  = document.getElementById('usernameField');
-
     modal.classList.remove('hidden');
 
     if (user) {
-        document.getElementById('modalTitle').innerText   = 'Edit Member';
-        document.getElementById('formAction').value       = 'edit';
-        document.getElementById('inp_id').value           = user.id;
-        document.getElementById('inp_name').value         = user.name;
-        document.getElementById('inp_dept').value         = user.dept;
-        document.getElementById('inp_type').value         = user.type;
-        document.getElementById('inp_year').value         = user.year;
-        document.getElementById('inp_status').value       = user.status;
-        // Hide add-only fields
+        document.getElementById('modalTitle').innerText = 'Edit Member';
+        document.getElementById('formAction').value    = 'edit';
+        document.getElementById('inp_id').value        = user.id;
+        document.getElementById('inp_name').value      = user.name;
+        document.getElementById('inp_dept').value      = user.dept;
+        document.getElementById('inp_type').value      = user.type;
+        document.getElementById('inp_year').value      = user.year;
+        document.getElementById('inp_status').value    = user.status;
         addOnly.classList.add('hidden');
         uField.classList.add('hidden');
         document.getElementById('inp_username').removeAttribute('required');
     } else {
-        document.getElementById('modalTitle').innerText   = 'Add New Member';
-        document.getElementById('formAction').value       = 'add';
-        document.getElementById('inp_id').value           = '';
+        document.getElementById('modalTitle').innerText = 'Add New Member';
+        document.getElementById('formAction').value    = 'add';
+        document.getElementById('inp_id').value        = '';
         document.getElementById('userForm').reset();
         addOnly.classList.remove('hidden');
         uField.classList.remove('hidden');
@@ -429,18 +486,16 @@ function closeModal() {
     document.getElementById('userModal').classList.add('hidden');
 }
 
-// ── Modal: Delete Confirm ──────────────────────────────────────────────────
+// ── Modal: Delete ──────────────────────────────────────────────────────────
 function confirmDelete(id, name) {
-    document.getElementById('deleteId').value     = id;
+    document.getElementById('deleteId').value      = id;
     document.getElementById('deleteName').innerText = name;
     document.getElementById('deleteModal').classList.remove('hidden');
 }
-
 function closeDeleteModal() {
     document.getElementById('deleteModal').classList.add('hidden');
 }
 
-// Close modals on backdrop click
 ['userModal','deleteModal'].forEach(id => {
     document.getElementById(id).addEventListener('click', function(e) {
         if (e.target === this) this.classList.add('hidden');
@@ -449,11 +504,11 @@ function closeDeleteModal() {
 
 // ── Search & Filter ────────────────────────────────────────────────────────
 function filterUsers() {
-    const search = document.getElementById('searchInput').value.toLowerCase();
-    const status = document.getElementById('statusFilter').value;
-    const type   = document.getElementById('typeFilter').value;
-    const rows   = document.querySelectorAll('.user-row');
-    let visible  = 0;
+    const search  = document.getElementById('searchInput').value.toLowerCase();
+    const status  = document.getElementById('statusFilter').value;
+    const type    = document.getElementById('typeFilter').value;
+    const rows    = document.querySelectorAll('.user-row');
+    let visible   = 0;
 
     rows.forEach(row => {
         const matchSearch = row.dataset.name.includes(search) || row.dataset.dept.includes(search);
@@ -467,13 +522,37 @@ function filterUsers() {
             row.style.display = 'none';
         }
     });
+
+    // Show/hide section headers smartly
+    toggleSectionHeader('section-faculty-header',  'Faculty',  type, search, status);
+    toggleSectionHeader('section-students-header', 'Students', type, search, status);
+
     document.getElementById('recordCount').innerText = `Showing ${visible} members`;
 }
 
-// Re-init lucide after DOM operations
-document.querySelectorAll('form').forEach(f => {
-    f.addEventListener('submit', () => setTimeout(() => lucide.createIcons(), 100));
-});
+function toggleSectionHeader(headerId, sectionType, typeFilter, search, statusFilter) {
+    const header = document.getElementById(headerId);
+    if (!header) return;
+
+    // Check if any visible rows belong to this section
+    const rows = document.querySelectorAll('.user-row');
+    let hasVisible = false;
+
+    const facultyTypes = ['Faculty', 'Teacher'];
+    rows.forEach(row => {
+        const isFacultySection  = sectionType === 'Faculty'  && facultyTypes.includes(row.dataset.type);
+        const isStudentSection  = sectionType === 'Students' && !facultyTypes.includes(row.dataset.type);
+        const matchSearch  = row.dataset.name.includes(search) || row.dataset.dept.includes(search);
+        const matchStatus  = statusFilter === 'All' || row.dataset.status === statusFilter;
+        const matchType    = typeFilter   === 'All' || row.dataset.type   === typeFilter;
+
+        if ((isFacultySection || isStudentSection) && matchSearch && matchStatus && matchType) {
+            hasVisible = true;
+        }
+    });
+
+    header.style.display = hasVisible ? '' : 'none';
+}
 </script>
 </body>
 </html>
