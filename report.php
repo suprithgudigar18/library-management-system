@@ -5,12 +5,20 @@ include("db_connect.php");
 if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
     header("Location: admin_login.php"); exit();
 }
+$days = 7;
+
+$query = "SELECT DATE(created_at) AS day, COUNT(*) AS cnt 
+          FROM book_requests 
+          WHERE requested_date >= DATE_SUB(NOW(), INTERVAL $days DAY) 
+          GROUP BY DATE(request_date  ) 
+          ORDER BY day ASC";
+
+$result = $conn->query($query);
 
 // ── Date range filter ─────────────────────────────────────────────────────────
 $range  = $_GET['range'] ?? '30';   // 7 | 30 | 90 | 365 | all
-$sql_range = ($range === 'all') ? '' : "AND created_at >= DATE_SUB(NOW(), INTERVAL {$range} DAY)";
-$br_range  = ($range === 'all') ? '' : "AND br.created_at >= DATE_SUB(NOW(), INTERVAL {$range} DAY)";
-
+$sql_range = ($range === 'all') ? '' : "AND created_at >= DATE_SUB(NOW(), INTERVAL $range DAY)";
+$br_range  = ($range === 'all') ? '' : "AND br.created_at >= DATE_SUB(NOW(), INTERVAL $range DAY)";
 // ── Overview stats ────────────────────────────────────────────────────────────
 $totalBooks     = $pdo->query("SELECT COUNT(*) FROM books")->fetchColumn();
 $totalMembers   = $pdo->query("SELECT COUNT(*) FROM users WHERE role='user'")->fetchColumn();
@@ -23,13 +31,14 @@ $totalBorrowed  = $pdo->query("SELECT COUNT(*) FROM book_requests WHERE status I
 $totalReturned  = $pdo->query("SELECT COUNT(*) FROM book_requests WHERE status='Returned'")->fetchColumn();
 $totalOverdue   = $pdo->query("SELECT COUNT(*) FROM book_requests WHERE status='Approved' AND due_date < NOW()")->fetchColumn();
 
-// Borrowing trend (last 30 days or selected range)
-$days = min((int)$range ?: 30, 365);
+// ── Borrowing trend (FIXED) ───────────────────────────────────────────────────
+$days = ($range === 'all') ? 365 : min((int)$range, 365);
+
 $borrowTrend = $pdo->query("
-  SELECT COUNT(*) FROM users as day, COUNT(*) as cnt
+    SELECT DATE(created_at) as day, COUNT(*) as cnt
     FROM book_requests
-    WHERE created_at >= DATE_SUB(NOW(), INTERVAL {$days} DAY)
-    GROUP BY DATE(registered_at)
+    WHERE 1=1 $sql_range
+    GROUP BY DATE(created_at)
     ORDER BY day ASC
 ")->fetchAll(PDO::FETCH_ASSOC);
 
