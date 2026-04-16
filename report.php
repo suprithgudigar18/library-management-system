@@ -7,7 +7,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
 }
 $days = 7;
 
-$query = "SELECT DATE(created_at) AS day, COUNT(*) AS cnt 
+$query = "SELECT DATE(request_date ) AS day, COUNT(*) AS cnt 
           FROM book_requests 
           WHERE requested_date >= DATE_SUB(NOW(), INTERVAL $days DAY) 
           GROUP BY DATE(request_date  ) 

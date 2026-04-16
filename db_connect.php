@@ -1,17 +1,23 @@
 <?php
-$host = 'localhost';
-$db   = 'librite_db';
-$user = 'root';
-$pass = ''; // Default for XAMPP is empty
-$charset = 'utf8mb4';
+// ================================================
+// db_connection.php — Database Connection File
+// Place this file in: C:\xampp\htdocs\librarysystem22\
+// ================================================
 
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-try {
-    $pdo = new PDO($dsn, $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
-} catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
+$host     = "localhost";
+$user     = "root";         // Default XAMPP username
+$password = "";             // Default XAMPP password (empty)
+$database = "librarysystem22"; // Your database name
+
+$conn = new mysqli($host, $user, $password, $database);
+
+if ($conn->connect_error) {
+    die("<div style='font-family:sans-serif;padding:30px;background:#1a0000;color:#ff6b6b;border:1px solid #ff4444;margin:20px;border-radius:8px;'>
+        <strong>❌ Database Connection Failed:</strong> " . $conn->connect_error . "
+        <br><br><small>Check that XAMPP MySQL is running and the database name is correct.</small>
+    </div>");
 }
+
+// Set charset for proper encoding
+$conn->set_charset("utf8mb4");
 ?>
