@@ -62,7 +62,7 @@ foreach ($requests as &$req) {
         $due = new DateTime($req['due_date']);
         if ($today > $due) {
             $days = (int)$today->diff($due)->days;
-            $fine = 20 + (floor(($days - 1) / 2) * 10);
+            $fine = $days * 10;
             $pdo->prepare("UPDATE book_requests SET fine_amount=? WHERE id=?")->execute([$fine, $req['id']]);
             $req['fine_amount'] = $fine;
         }

@@ -5,20 +5,12 @@ include("db_connect.php");
 if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
     header("Location: admin_login.php"); exit();
 }
-$days = 7;
-
-$query = "SELECT DATE(request_date ) AS day, COUNT(*) AS cnt 
-          FROM book_requests 
-          WHERE requested_date >= DATE_SUB(NOW(), INTERVAL $days DAY) 
-          GROUP BY DATE(request_date  ) 
-          ORDER BY day ASC";
-
-$result = $conn->query($query);
 
 // ── Date range filter ─────────────────────────────────────────────────────────
-$range  = $_GET['range'] ?? '30';   // 7 | 30 | 90 | 365 | all
-$sql_range = ($range === 'all') ? '' : "AND created_at >= DATE_SUB(NOW(), INTERVAL $range DAY)";
-$br_range  = ($range === 'all') ? '' : "AND br.created_at >= DATE_SUB(NOW(), INTERVAL $range DAY)";
+$range     = $_GET['range'] ?? '30';   // 7 | 30 | 90 | 365 | all
+$sql_range = ($range === 'all') ? '' : "AND requested_at >= DATE_SUB(NOW(), INTERVAL $range DAY)";
+$days      = ($range === 'all') ? 365 : min((int)$range, 365);
+
 // ── Overview stats ────────────────────────────────────────────────────────────
 $totalBooks     = $pdo->query("SELECT COUNT(*) FROM books")->fetchColumn();
 $totalMembers   = $pdo->query("SELECT COUNT(*) FROM users WHERE role='user'")->fetchColumn();
@@ -27,18 +19,16 @@ $totalFines     = $pdo->query("SELECT COALESCE(SUM(fine_amount),0) FROM book_req
 $collectedFines = $pdo->query("SELECT COALESCE(SUM(amount),0) FROM fine_payments WHERE status='Approved'")->fetchColumn();
 
 // ── Borrowing stats ───────────────────────────────────────────────────────────
-$totalBorrowed  = $pdo->query("SELECT COUNT(*) FROM book_requests WHERE status IN ('Approved','Returned')")->fetchColumn();
-$totalReturned  = $pdo->query("SELECT COUNT(*) FROM book_requests WHERE status='Returned'")->fetchColumn();
-$totalOverdue   = $pdo->query("SELECT COUNT(*) FROM book_requests WHERE status='Approved' AND due_date < NOW()")->fetchColumn();
+$totalBorrowed = $pdo->query("SELECT COUNT(*) FROM book_requests WHERE status IN ('Approved','Returned')")->fetchColumn();
+$totalReturned = $pdo->query("SELECT COUNT(*) FROM book_requests WHERE status='Returned'")->fetchColumn();
+$totalOverdue  = $pdo->query("SELECT COUNT(*) FROM book_requests WHERE status='Approved' AND due_date < NOW()")->fetchColumn();
 
-// ── Borrowing trend (FIXED) ───────────────────────────────────────────────────
-$days = ($range === 'all') ? 365 : min((int)$range, 365);
-
+// ── Borrowing trend ───────────────────────────────────────────────────────────
 $borrowTrend = $pdo->query("
-    SELECT DATE(created_at) as day, COUNT(*) as cnt
+    SELECT DATE(requested_at) as day, COUNT(*) as cnt
     FROM book_requests
     WHERE 1=1 $sql_range
-    GROUP BY DATE(created_at)
+    GROUP BY DATE(requested_at)
     ORDER BY day ASC
 ")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -52,8 +42,8 @@ $newMembers = $pdo->query("
 ")->fetchAll(PDO::FETCH_ASSOC);
 
 $newMembersTotal = $pdo->query("
-    SELECT COUNT(*) FROM users WHERE role='user'
-    AND created_at >= DATE_SUB(NOW(), INTERVAL {$days} DAY)
+    SELECT COUNT(*) FROM users
+    WHERE role='user' AND created_at >= DATE_SUB(NOW(), INTERVAL {$days} DAY)
 ")->fetchColumn();
 
 // ── Most borrowed books ───────────────────────────────────────────────────────
@@ -99,13 +89,13 @@ $booksByCategory = $pdo->query("
     LIMIT 8
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-// ── Recent activity feed (last 15 events) ─────────────────────────────────────
+// ── Recent activity feed ──────────────────────────────────────────────────────
 $recentActivity = $pdo->query("
-    SELECT 'borrow' as type, u.full_name, b.title, br.created_at, br.status
+    SELECT u.full_name, b.title, br.requested_at as created_at, br.status
     FROM book_requests br
     JOIN users u ON u.id = br.user_id
     JOIN books b ON b.id = br.book_id
-    ORDER BY br.created_at DESC
+    ORDER BY br.requested_at DESC
     LIMIT 15
 ")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -179,29 +169,25 @@ $overdueList = $pdo->query("
         .range-btn:hover { border-color:var(--primary); color:var(--primary); }
         .range-btn.active { background:var(--primary); color:#000; border-color:var(--primary); }
 
-        /* Print / Export button */
         .export-btns { margin-left:auto; display:flex; gap:8px; }
         .btn-export {
             display:inline-flex; align-items:center; gap:6px;
             padding:6px 14px; border-radius:8px; font-size:.8rem; font-weight:600;
             cursor:pointer; border:1px solid; transition:all .25s; text-decoration:none;
         }
-        .btn-print  { border-color:rgba(34,211,238,.4); color:var(--primary); background:rgba(34,211,238,.07); }
-        .btn-print:hover  { background:var(--primary); color:#000; }
+        .btn-print { border-color:rgba(34,211,238,.4); color:var(--primary); background:rgba(34,211,238,.07); }
+        .btn-print:hover { background:var(--primary); color:#000; }
 
         /* ── Content ────────────────────────────────── */
         .content { max-width:1300px; margin:0 auto; padding:2rem; }
 
-        /* ── Section heading ────────────────────────── */
         .section-title {
             font-family:'Playfair Display',serif; font-size:1.2rem;
             margin:2.4rem 0 1.2rem; display:flex; align-items:center; gap:10px;
         }
-        .section-title::after {
-            content:''; flex:1; height:1px; background:var(--gb);
-        }
+        .section-title::after { content:''; flex:1; height:1px; background:var(--gb); }
 
-        /* ── Stat cards grid ────────────────────────── */
+        /* ── Stat cards ─────────────────────────────── */
         .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1.2rem; }
         .stat-card {
             background:var(--glass); border:1px solid var(--gb); border-radius:16px;
@@ -213,7 +199,7 @@ $overdueList = $pdo->query("
         .stat-value { font-size:1.9rem; font-weight:700; margin:.3rem 0; }
         .stat-label { font-size:.8rem; color:var(--muted); }
 
-        /* ── Charts grid ────────────────────────────── */
+        /* ── Charts ─────────────────────────────────── */
         .charts-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(420px,1fr)); gap:1.4rem; }
         .chart-card {
             background:var(--glass); border:1px solid var(--gb); border-radius:16px; padding:1.4rem;
@@ -221,7 +207,7 @@ $overdueList = $pdo->query("
         .chart-card-title { font-size:.95rem; font-weight:600; margin-bottom:1rem; color:var(--text); }
         canvas { max-height:260px; }
 
-        /* ── Table ──────────────────────────────────── */
+        /* ── Tables ─────────────────────────────────── */
         .table-card {
             background:var(--glass); border:1px solid var(--gb); border-radius:16px;
             overflow:hidden; margin-bottom:1.4rem;
@@ -240,10 +226,10 @@ $overdueList = $pdo->query("
         .pill {
             display:inline-block; padding:2px 10px; border-radius:20px; font-size:.7rem; font-weight:700;
         }
-        .pill-green  { background:rgba(52,211,153,.12); color:#34d399; border:1px solid rgba(52,211,153,.25); }
-        .pill-yellow { background:rgba(251,191,36,.12); color:#fbbf24; border:1px solid rgba(251,191,36,.25); }
+        .pill-green  { background:rgba(52,211,153,.12);  color:#34d399; border:1px solid rgba(52,211,153,.25); }
+        .pill-yellow { background:rgba(251,191,36,.12);  color:#fbbf24; border:1px solid rgba(251,191,36,.25); }
         .pill-red    { background:rgba(248,113,113,.12); color:#f87171; border:1px solid rgba(248,113,113,.25); }
-        .pill-blue   { background:rgba(34,211,238,.12); color:#22d3ee;  border:1px solid rgba(34,211,238,.25); }
+        .pill-blue   { background:rgba(34,211,238,.12);  color:#22d3ee; border:1px solid rgba(34,211,238,.25); }
 
         /* ── Activity feed ──────────────────────────── */
         .feed-item {
@@ -261,34 +247,26 @@ $overdueList = $pdo->query("
         .feed-sub  { font-size:.78rem; color:var(--muted); }
         .feed-time { font-size:.72rem; color:var(--muted); flex-shrink:0; padding-top:2px; }
 
-        /* ── Progress bar ───────────────────────────── */
-        .bar-wrap { margin-top:.4rem; }
-        .bar-row { display:flex; align-items:center; gap:10px; margin:.5rem 0; }
-        .bar-label { font-size:.8rem; color:var(--muted); width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .bar-track { flex:1; height:7px; background:rgba(255,255,255,.07); border-radius:4px; overflow:hidden; }
-        .bar-fill  { height:100%; border-radius:4px; transition:width .5s ease; }
-        .bar-count { font-size:.78rem; color:var(--muted); width:28px; text-align:right; }
-
-        /* ── Donut legends ──────────────────────────── */
+        /* ── Donut legend ───────────────────────────── */
         .donut-legend { display:flex; flex-wrap:wrap; gap:10px 16px; margin-top:1rem; }
         .donut-legend-item { display:flex; align-items:center; gap:6px; font-size:.78rem; color:var(--muted); }
         .legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
 
-        /* ── Overdue highlight ──────────────────────── */
-        .overdue-days { color:#f87171; font-weight:700; }
+        /* ── Bar track ──────────────────────────────── */
+        .bar-track { flex:1; height:7px; background:rgba(255,255,255,.07); border-radius:4px; overflow:hidden; }
+        .bar-fill  { height:100%; border-radius:4px; transition:width .5s ease; }
 
-        /* ── Empty state ────────────────────────────── */
+        .overdue-days { color:#f87171; font-weight:700; }
         .empty { text-align:center; padding:2.5rem; color:var(--muted); font-size:.88rem; }
 
-        /* ── Print styles ───────────────────────────── */
+        /* ── Print ──────────────────────────────────── */
         @media print {
             body { background:#fff !important; color:#000 !important; }
             .topbar, .filter-bar, .export-btns, .back-btn { display:none !important; }
             .stat-card, .chart-card, .table-card { border:1px solid #ccc !important; background:#fff !important; break-inside:avoid; }
             .content { padding:0 !important; max-width:100% !important; }
             .charts-grid { grid-template-columns:1fr 1fr !important; }
-            th, td { color:#000 !important; }
-            .stat-value, .stat-label, .section-title, .chart-card-title, .table-head-title, .bar-label { color:#000 !important; }
+            th, td, .stat-value, .stat-label, .section-title, .chart-card-title, .table-head-title { color:#000 !important; }
         }
         @media(max-width:680px) {
             .charts-grid { grid-template-columns:1fr; }
@@ -300,7 +278,7 @@ $overdueList = $pdo->query("
 </head>
 <body>
 
-<!-- ── Topbar ────────────────────────────────────────────────────────────────── -->
+<!-- Topbar -->
 <div class="topbar">
     <div class="topbar-left">
         <a href="admin_dashboard.php" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
@@ -313,7 +291,7 @@ $overdueList = $pdo->query("
     </div>
 </div>
 
-<!-- ── Filter bar ─────────────────────────────────────────────────────────────── -->
+<!-- Filter bar -->
 <div class="filter-bar">
     <span>Show data for:</span>
     <?php
@@ -326,7 +304,7 @@ $overdueList = $pdo->query("
 
 <div class="content">
 
-    <!-- ═══ OVERVIEW STATS ═══════════════════════════════════════════════════════ -->
+    <!-- OVERVIEW -->
     <div class="section-title"><i class="fas fa-tachometer-alt" style="color:var(--primary)"></i> Overview</div>
     <div class="stats-grid">
         <div class="stat-card">
@@ -356,7 +334,7 @@ $overdueList = $pdo->query("
         </div>
         <div class="stat-card">
             <div class="stat-icon">📌</div>
-            <div class="stat-label">Active Loans</div>
+            <div class="stat-label">Currently Borrowed</div>
             <div class="stat-value" style="color:var(--warn)"><?= number_format($activeLoans) ?></div>
         </div>
         <div class="stat-card">
@@ -376,28 +354,21 @@ $overdueList = $pdo->query("
         </div>
     </div>
 
-    <!-- ═══ CHARTS ROW 1 ═════════════════════════════════════════════════════════ -->
+    <!-- TRENDS -->
     <div class="section-title"><i class="fas fa-chart-line" style="color:var(--primary)"></i> Trends</div>
     <div class="charts-grid">
-
-        <!-- Borrowing trend line chart -->
         <div class="chart-card">
             <div class="chart-card-title">📈 Daily Borrowing Activity</div>
             <canvas id="borrowChart"></canvas>
         </div>
-
-        <!-- New members line chart -->
         <div class="chart-card">
             <div class="chart-card-title">👤 New Member Registrations</div>
             <canvas id="memberChart"></canvas>
         </div>
-
     </div>
 
-    <!-- ═══ CHARTS ROW 2 ═════════════════════════════════════════════════════════ -->
+    <!-- STATUS & CATEGORY DONUTS -->
     <div class="charts-grid" style="margin-top:1.4rem">
-
-        <!-- Request status donut -->
         <div class="chart-card">
             <div class="chart-card-title">🔄 Loan Request Status Breakdown</div>
             <canvas id="statusChart"></canvas>
@@ -408,22 +379,19 @@ $overdueList = $pdo->query("
                 ?>
                 <div class="donut-legend-item">
                     <div class="legend-dot" style="background:<?= $statusColors[$s] ?? '#888' ?>"></div>
-                    <?= $s ?> (<?= $c ?>)
+                    <?= htmlspecialchars($s) ?> (<?= $c ?>)
                 </div>
                 <?php endforeach; ?>
             </div>
         </div>
-
-        <!-- Books by category donut -->
         <div class="chart-card">
             <div class="chart-card-title">📂 Books by Category</div>
             <canvas id="categoryChart"></canvas>
             <div class="donut-legend" id="catLegend"></div>
         </div>
-
     </div>
 
-    <!-- ═══ PURCHASE REQUESTS SUMMARY ════════════════════════════════════════════ -->
+    <!-- PURCHASE REQUESTS -->
     <?php if (!empty($purchaseMap)): ?>
     <div class="section-title"><i class="fas fa-shopping-cart" style="color:var(--primary)"></i> Purchase Requests Summary</div>
     <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
@@ -432,19 +400,17 @@ $overdueList = $pdo->query("
         foreach ($purchaseMap as $s => $c):
         ?>
         <div class="stat-card">
-            <div class="stat-label"><?= $s ?></div>
+            <div class="stat-label"><?= htmlspecialchars($s) ?></div>
             <div class="stat-value" style="color:<?= $pColors[$s] ?? 'white' ?>"><?= $c ?></div>
         </div>
         <?php endforeach; ?>
     </div>
     <?php endif; ?>
 
-    <!-- ═══ TOP BOOKS ═════════════════════════════════════════════════════════════ -->
+    <!-- TOP BOOKS -->
     <div class="section-title"><i class="fas fa-fire" style="color:var(--primary)"></i> Most Borrowed Books</div>
-    <?php
-    $maxBorrow = $topBooks[0]['borrow_count'] ?? 1;
-    $barColors = ['#22d3ee','#34d399','#fbbf24','#a78bfa','#f87171','#22d3ee','#34d399','#fbbf24','#a78bfa','#f87171'];
-    ?>
+    <?php $maxBorrow = $topBooks[0]['borrow_count'] ?? 1;
+    $barColors = ['#22d3ee','#34d399','#fbbf24','#a78bfa','#f87171','#22d3ee','#34d399','#fbbf24','#a78bfa','#f87171']; ?>
     <div class="table-card">
         <div class="table-head">
             <span class="table-head-title">Top 10 Books</span>
@@ -454,9 +420,7 @@ $overdueList = $pdo->query("
         <div class="empty">No borrowing data yet.</div>
         <?php else: ?>
         <table>
-            <thead><tr>
-                <th>#</th><th>Title</th><th>Author</th><th>Borrows</th><th>Trend</th>
-            </tr></thead>
+            <thead><tr><th>#</th><th>Title</th><th>Author</th><th>Borrows</th><th>Trend</th></tr></thead>
             <tbody>
             <?php foreach ($topBooks as $i => $b): ?>
             <tr>
@@ -476,7 +440,7 @@ $overdueList = $pdo->query("
         <?php endif; ?>
     </div>
 
-    <!-- ═══ TOP MEMBERS ═══════════════════════════════════════════════════════════ -->
+    <!-- TOP MEMBERS -->
     <div class="section-title"><i class="fas fa-star" style="color:var(--primary)"></i> Most Active Members</div>
     <div class="table-card">
         <div class="table-head">
@@ -487,9 +451,7 @@ $overdueList = $pdo->query("
         <div class="empty">No member data yet.</div>
         <?php else: ?>
         <table>
-            <thead><tr>
-                <th>#</th><th>Name</th><th>Username</th><th>Email</th><th>Total Borrows</th>
-            </tr></thead>
+            <thead><tr><th>#</th><th>Name</th><th>Username</th><th>Email</th><th>Total Borrows</th></tr></thead>
             <tbody>
             <?php foreach ($topMembers as $i => $m): ?>
             <tr>
@@ -505,7 +467,7 @@ $overdueList = $pdo->query("
         <?php endif; ?>
     </div>
 
-    <!-- ═══ OVERDUE BOOKS ═════════════════════════════════════════════════════════ -->
+    <!-- OVERDUE -->
     <?php if (!empty($overdueList)): ?>
     <div class="section-title"><i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i> Overdue Books</div>
     <div class="table-card">
@@ -514,9 +476,7 @@ $overdueList = $pdo->query("
             <span style="font-size:.78rem;color:var(--muted)"><?= count($overdueList) ?> record(s)</span>
         </div>
         <table>
-            <thead><tr>
-                <th>Member</th><th>Email</th><th>Book</th><th>Due Date</th><th>Days Overdue</th><th>Fine</th>
-            </tr></thead>
+            <thead><tr><th>Member</th><th>Email</th><th>Book</th><th>Due Date</th><th>Days Overdue</th><th>Fine</th></tr></thead>
             <tbody>
             <?php foreach ($overdueList as $o): ?>
             <tr>
@@ -533,7 +493,7 @@ $overdueList = $pdo->query("
     </div>
     <?php endif; ?>
 
-    <!-- ═══ RECENT ACTIVITY ═══════════════════════════════════════════════════════ -->
+    <!-- RECENT ACTIVITY -->
     <div class="section-title"><i class="fas fa-clock" style="color:var(--primary)"></i> Recent Activity</div>
     <div class="table-card">
         <div class="table-head"><span class="table-head-title">Latest 15 Transactions</span></div>
@@ -541,8 +501,7 @@ $overdueList = $pdo->query("
         <div class="empty">No transactions yet.</div>
         <?php else: ?>
         <?php foreach ($recentActivity as $a):
-            $isReturn = ($a['status'] === 'Returned');
-        ?>
+            $isReturn = ($a['status'] === 'Returned'); ?>
         <div class="feed-item">
             <div class="feed-icon <?= $isReturn ? 'return' : 'borrow' ?>">
                 <i class="fas <?= $isReturn ? 'fa-undo' : 'fa-book-open' ?>"></i>
@@ -564,14 +523,13 @@ $overdueList = $pdo->query("
 </div><!-- /content -->
 
 <script>
-// ── Chart defaults ─────────────────────────────────────────────────────────────
 Chart.defaults.color = 'rgba(255,255,255,.5)';
 Chart.defaults.font.family = 'Inter, sans-serif';
 Chart.defaults.font.size   = 11;
 
-// ── Borrow trend ───────────────────────────────────────────────────────────────
-const borrowData  = <?= json_encode(array_column($borrowTrend, 'cnt')) ?>;
-const borrowDays  = <?= json_encode(array_column($borrowTrend, 'day')) ?>;
+// Borrow trend
+const borrowData = <?= json_encode(array_column($borrowTrend, 'cnt')) ?>;
+const borrowDays = <?= json_encode(array_column($borrowTrend, 'day')) ?>;
 new Chart(document.getElementById('borrowChart'), {
     type: 'line',
     data: {
@@ -581,10 +539,8 @@ new Chart(document.getElementById('borrowChart'), {
             data: borrowData,
             borderColor: '#22d3ee',
             backgroundColor: 'rgba(34,211,238,.1)',
-            fill: true,
-            tension: .4,
-            pointRadius: 3,
-            pointBackgroundColor: '#22d3ee',
+            fill: true, tension: .4,
+            pointRadius: 3, pointBackgroundColor: '#22d3ee',
         }]
     },
     options: {
@@ -597,7 +553,7 @@ new Chart(document.getElementById('borrowChart'), {
     }
 });
 
-// ── New members trend ──────────────────────────────────────────────────────────
+// New members trend
 const memberData = <?= json_encode(array_column($newMembers, 'cnt')) ?>;
 const memberDays = <?= json_encode(array_column($newMembers, 'day')) ?>;
 new Chart(document.getElementById('memberChart'), {
@@ -609,8 +565,7 @@ new Chart(document.getElementById('memberChart'), {
             data: memberData,
             backgroundColor: 'rgba(167,139,250,.6)',
             borderColor: '#a78bfa',
-            borderWidth: 1,
-            borderRadius: 4,
+            borderWidth: 1, borderRadius: 4,
         }]
     },
     options: {
@@ -623,7 +578,7 @@ new Chart(document.getElementById('memberChart'), {
     }
 });
 
-// ── Status donut ───────────────────────────────────────────────────────────────
+// Status donut
 const statusLabels = <?= json_encode(array_keys($statusMap)) ?>;
 const statusValues = <?= json_encode(array_values($statusMap)) ?>;
 const statusColors = { Approved:'#22d3ee', Returned:'#34d399', Pending:'#fbbf24', Rejected:'#f87171', Cancelled:'#a78bfa' };
@@ -634,9 +589,7 @@ new Chart(document.getElementById('statusChart'), {
         datasets: [{
             data: statusValues,
             backgroundColor: statusLabels.map(s => statusColors[s] || '#888'),
-            borderColor: '#02040a',
-            borderWidth: 2,
-            hoverOffset: 6,
+            borderColor: '#02040a', borderWidth: 2, hoverOffset: 6,
         }]
     },
     options: {
@@ -649,9 +602,9 @@ new Chart(document.getElementById('statusChart'), {
     }
 });
 
-// ── Category donut ─────────────────────────────────────────────────────────────
-const catLabels = <?= json_encode(array_column($booksByCategory,'category')) ?>;
-const catValues = <?= json_encode(array_column($booksByCategory,'cnt')) ?>;
+// Category donut
+const catLabels  = <?= json_encode(array_column($booksByCategory,'category')) ?>;
+const catValues  = <?= json_encode(array_column($booksByCategory,'cnt')) ?>;
 const catPalette = ['#22d3ee','#a78bfa','#34d399','#fbbf24','#f87171','#60a5fa','#fb923c','#4ade80'];
 new Chart(document.getElementById('categoryChart'), {
     type: 'doughnut',
@@ -660,9 +613,7 @@ new Chart(document.getElementById('categoryChart'), {
         datasets: [{
             data: catValues,
             backgroundColor: catPalette,
-            borderColor: '#02040a',
-            borderWidth: 2,
-            hoverOffset: 6,
+            borderColor: '#02040a', borderWidth: 2, hoverOffset: 6,
         }]
     },
     options: {
@@ -675,7 +626,7 @@ new Chart(document.getElementById('categoryChart'), {
     }
 });
 
-// Build category legend dynamically
+// Category legend
 const legend = document.getElementById('catLegend');
 catLabels.forEach((l,i) => {
     legend.innerHTML += `<div class="donut-legend-item">

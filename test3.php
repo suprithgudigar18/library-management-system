@@ -158,7 +158,7 @@ foreach ($myRequests as &$req) {
     if ($req['status']==='Approved' && $req['due_date'] && !$req['returned_at'] && !($req['fine_paid']??0)) {
         $due=new DateTime($req['due_date']);
         if ($today>$due) {
-            $fine=(int)$today->diff($due)->days*5; // ₹5 per day
+            $fine=(int)$today->diff($due)->days*10; // ₹10 per day
             $pdo->prepare("UPDATE book_requests SET fine_amount=? WHERE id=?")->execute([$fine,$req['id']]);
             $req['fine_amount']=$fine;
         }

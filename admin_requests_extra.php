@@ -257,6 +257,7 @@ body{background:var(--onyx);font-family:'Inter',sans-serif;color:white;display:f
         <i class="fas fa-credit-card"></i> Payments & Orders
         <?php if($pendingPay+$pendingPurchase>0):?><span class="nav-badge"><?=$pendingPay+$pendingPurchase?></span><?php endif;?>
     </a>
+    <a href="report.php" class="nav-item"><i class="fas fa-chart-bar"></i> Reports & Analytics </a>
     <a href="admin_forgot_password.php" class="nav-item"><i class="fas fa-lock"></i> Change Password</a>
     <a href="index.php" class="nav-item" style="margin-top:2rem;color:#f87171;"><i class="fas fa-sign-out-alt"></i> Logout</a>
 </aside>
@@ -278,8 +279,8 @@ body{background:var(--onyx);font-family:'Inter',sans-serif;color:white;display:f
     <div class="stats-grid">
         <div class="stat-card"><div class="stat-icon">📚</div><div class="stat-label">Total Books</div><div class="stat-value" style="color:var(--accent)"><?=number_format($totalBooks)?></div></div>
         <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-label">Members</div><div class="stat-value" style="color:var(--purple)"><?=number_format($totalMembers)?></div></div>
-        <div class="stat-card"><div class="stat-icon">📖</div><div class="stat-label">Active Loans</div><div class="stat-value" style="color:var(--green)"><?=number_format($activeLoans)?></div></div>
-        <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-label">Pending Req.</div><div class="stat-value" style="color:var(--yellow)"><?=number_format($pendingReqs)?></div></div>
+        <div class="stat-card"><div class="stat-icon">📖</div><div class="stat-label">Currently Borrowed</div><div class="stat-value" style="color:var(--green)"><?=number_format($activeLoans)?></div></div>
+        <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-label">Waiting for Approval</div><div class="stat-value" style="color:var(--yellow)"><?=number_format($pendingReqs)?></div></div>
         <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-label">Unpaid Fines</div><div class="stat-value" style="color:var(--red)">₹<?=number_format($totalFines,2)?></div></div>
         <div class="stat-card"><div class="stat-icon">🔔</div><div class="stat-label">Pending Actions</div><div class="stat-value" style="color:var(--blue)"><?=$pendingPay+$pendingPurchase?></div></div>
     </div>

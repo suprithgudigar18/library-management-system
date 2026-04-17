@@ -197,12 +197,12 @@ $pendingPayments = $pdo->query("SELECT COUNT(*) FROM fine_payments WHERE status=
             </div>
             <div class="stat-card">
                 <div class="stat-icon">📖</div>
-                <div class="stat-label">Active Loans</div>
+                <div class="stat-label">Currently Borrowed</div>
                 <div class="stat-value" style="color:#34d399"><?= number_format($activeLoans) ?></div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">⏳</div>
-                <div class="stat-label">Pending Requests</div>
+                <div class="stat-label">Waiting for Approval</div>
                 <div class="stat-value" style="color:#fbbf24"><?= number_format($pendingReqs) ?></div>
             </div>
             <div class="stat-card">
@@ -326,6 +326,62 @@ $pendingPayments = $pdo->query("SELECT COUNT(*) FROM fine_payments WHERE status=
             </div>
         </div>
         <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+
+        <!-- ═══ BOOK REVIEWS & REPORTS ══════════════════════════════════════════ -->
+        <?php
+        $revs = [];
+        try {
+            $revs = $pdo->query("
+                SELECT br.*, b.title as book_title, u.username, u.full_name
+                FROM book_reviews br
+                JOIN books b ON b.id = br.book_id
+                JOIN users u ON u.id = br.user_id
+                ORDER BY br.id DESC LIMIT 20
+            ")->fetchAll();
+        } catch (Exception $e) {
+            // Failsafe in case table or columns don't exist yet
+        }
+        ?>
+        <div class="section-header" style="margin-top:3.5rem;">
+            <div style="display:flex;align-items:center">
+                <span class="section-title">⭐ Book Reviews & Reports</span>
+            </div>
+        </div>
+        
+        <?php if (empty($revs)): ?>
+        <div class="empty-state">
+            <i class="fas fa-comment-slash" style="font-size:2.5rem;margin-bottom:1rem;display:block;"></i>
+            <p>No reviews or reports from users yet.</p>
+        </div>
+        <?php else: ?>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:1.2rem;">
+            <?php foreach ($revs as $r): ?>
+            <div class="purchase-card" style="border-left:3px solid <?= $r['type'] === 'report' ? '#f87171' : '#fbbf24' ?>">
+                <div class="pc-header">
+                    <div style="flex:1">
+                        <div class="pc-title"><?= htmlspecialchars($r['book_title']) ?></div>
+                        <div class="pc-meta">
+                            <span class="pc-user"><i class="fas fa-user" style="font-size:.65rem"></i> <?= htmlspecialchars($r['full_name'] ?: $r['username']) ?></span>
+                            &nbsp;·&nbsp; <?= date('d M Y', strtotime($r['created_at'])) ?>
+                        </div>
+                    </div>
+                    <div>
+                        <?php if ($r['type'] === 'report'): ?>
+                            <span class="status-pill pill-Rejected">🚩 Report</span>
+                        <?php else: ?>
+                            <span class="status-pill pill-Pending">⭐ <?= $r['rating'] ?>/5</span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php if ($r['comment']): ?>
+                <div class="pc-reason">
+                    <?= nl2br(htmlspecialchars($r['comment'])) ?>
+                </div>
+                <?php endif; ?>
+            </div>
+            <?php endforeach; ?>
         </div>
         <?php endif; ?>
 

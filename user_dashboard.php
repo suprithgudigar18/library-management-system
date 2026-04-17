@@ -72,14 +72,13 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['submit_review'])) {
     $book_id = (int)$_POST['review_book_id'];
     $rating  = (int)$_POST['review_rating'];
     $comment = trim($_POST['review_comment'] ?? '');
-    $type    = $_POST['review_type'] ?? 'review'; // 'review' or 'report'
+    $type    = $_POST['review_type'] ?? 'review';
     if ($rating >= 1 && $rating <= 5 && $book_id) {
-        // Check if already reviewed
-        $rv = $pdo->prepare("SELECT id FROM book_reviews WHERE user_id=? AND book_id=?");
-        $rv->execute([$user_id, $book_id]);
+        $rv = $pdo->prepare("SELECT id FROM book_reviews WHERE user_id=? AND book_id=? AND type=?");
+        $rv->execute([$user_id, $book_id, $type]);
         if ($rv->fetch()) {
-            $pdo->prepare("UPDATE book_reviews SET rating=?,comment=?,type=?,updated_at=NOW() WHERE user_id=? AND book_id=?")
-                ->execute([$rating,$comment,$type,$user_id,$book_id]);
+            $pdo->prepare("UPDATE book_reviews SET rating=?,comment=?,updated_at=NOW() WHERE user_id=? AND book_id=? AND type=?")
+                ->execute([$rating,$comment,$user_id,$book_id,$type]);
         } else {
             $pdo->prepare("INSERT INTO book_reviews (user_id,book_id,rating,comment,type) VALUES (?,?,?,?,?)")
                 ->execute([$user_id,$book_id,$rating,$comment,$type]);
@@ -94,8 +93,16 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['submit_report'])) {
     $report_type = $_POST['report_type'] ?? 'other';
     $report_note = trim($_POST['report_note'] ?? '');
     if ($book_id) {
-        $pdo->prepare("INSERT INTO book_reports (user_id,book_id,report_type,note) VALUES (?,?,?,?)")
-            ->execute([$user_id,$book_id,$report_type,$report_note]);
+        $comment_text = "Issue: " . $report_type . "\nNote: " . $report_note;
+        $rv = $pdo->prepare("SELECT id FROM book_reviews WHERE user_id=? AND book_id=? AND type='report'");
+        $rv->execute([$user_id, $book_id]);
+        if ($rv->fetch()) {
+            $pdo->prepare("UPDATE book_reviews SET comment=?,updated_at=NOW() WHERE user_id=? AND book_id=? AND type='report'")
+                ->execute([$comment_text, $user_id, $book_id]);
+        } else {
+            $pdo->prepare("INSERT INTO book_reviews (user_id,book_id,rating,comment,type) VALUES (?,?,0,?,'report')")
+                ->execute([$user_id,$book_id,$comment_text]);
+        }
         $uploadMsg = 'report_ok';
     }
 }
@@ -152,13 +159,13 @@ $rs=$pdo->prepare("SELECT br.*,b.title,b.author,b.shelf,b.category FROM book_req
 $rs->execute([$user_id]);
 $myRequests=$rs->fetchAll();
 
-// ── Auto Fines ₹5/day ─────────────────────────────────────────────────────────
+// ── Auto Fines ₹10/day ─────────────────────────────────────────────────────────
 $today=new DateTime();
 foreach ($myRequests as &$req) {
     if ($req['status']==='Approved' && $req['due_date'] && !$req['returned_at'] && !($req['fine_paid']??0)) {
         $due=new DateTime($req['due_date']);
         if ($today>$due) {
-            $fine=(int)$today->diff($due)->days*5; // ₹5 per day
+            $fine=(int)$today->diff($due)->days*10; // ₹10 per day
             $pdo->prepare("UPDATE book_requests SET fine_amount=? WHERE id=?")->execute([$fine,$req['id']]);
             $req['fine_amount']=$fine;
         }
@@ -180,7 +187,7 @@ $newApprovals=$na->fetchAll();
 foreach ($newApprovals as $a) $pdo->prepare("UPDATE book_requests SET notified=1 WHERE id=?")->execute([$a['id']]);
 
 // ── User's own reviews ────────────────────────────────────────────────────────
-$myReviews=$pdo->prepare("SELECT book_id,rating,comment,type FROM book_reviews WHERE user_id=?");
+$myReviews=$pdo->prepare("SELECT book_id,rating,comment,type FROM book_reviews WHERE user_id=? AND type='review'");
 $myReviews->execute([$user_id]);
 $myReviewsMap=[];
 foreach($myReviews->fetchAll() as $rv) $myReviewsMap[$rv['book_id']]=$rv;
@@ -322,10 +329,8 @@ input[type=file]{display:none;}
 .bc-btn.can:hover{background:linear-gradient(135deg,#2ea043,#238636);transform:translateY(-1px);}
 .bc-btn.done{background:rgba(88,166,255,.1);color:#58a6ff;border:1px solid rgba(88,166,255,.3);cursor:default;}
 .bc-btn.none{background:rgba(255,255,255,.04);color:var(--muted);border:1px solid rgba(255,255,255,.07);cursor:not-allowed;}
-.bc-btn.review-btn{background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.3);flex:0 0 auto;padding:9px 10px;}
-.bc-btn.review-btn:hover{background:rgba(251,191,36,.2);}
-.bc-btn.report-btn{background:rgba(248,81,73,.08);color:#f87171;border:1px solid rgba(248,81,73,.25);flex:0 0 auto;padding:9px 10px;}
-.bc-btn.report-btn:hover{background:rgba(248,81,73,.18);}
+.bc-btn.action-btn{background:rgba(255,255,255,.05);color:var(--muted);border:1px solid rgba(255,255,255,.15);flex:0 0 auto;padding:9px 10px;}
+.bc-btn.action-btn:hover{background:rgba(255,255,255,.1);color:white;}
 
 /* ═══ MODAL ════════════════════════════════════════════════════════════════ */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);z-index:9500;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .25s;}
@@ -383,7 +388,7 @@ if (isset($toastMap[$uploadMsg])): ?>
     <p class="mb-1" style="color:var(--muted)"><strong class="text-white"><?=htmlspecialchars($a['title'])?></strong> approved.
     <?php if($a['due_date']):?><br><span class="text-yellow-400 text-sm">Return by <strong><?=date('d M Y',strtotime($a['due_date']))?></strong></span><?php endif;?></p>
     <?php endforeach; ?>
-    <p class="text-xs mt-3 mb-5" style="color:var(--muted)">Collect from library counter. Return within <strong>10 days</strong>. Fine: ₹5/day after due date. You may extend up to <strong>2 times (10 days each)</strong>.</p>
+    <p class="text-xs mt-3 mb-5" style="color:var(--muted)">Collect from library counter. Return within <strong>10 days</strong>. Fine: ₹10/day after due date. You may extend up to <strong>2 times (10 days each)</strong>.</p>
     <button onclick="document.getElementById('apprOv').remove()" class="bg-emerald-600 text-white px-8 py-2 rounded-lg font-bold">Got it!</button>
   </div>
 </div>
@@ -462,6 +467,24 @@ if (isset($toastMap[$uploadMsg])): ?>
         <button type="button" onclick="closeModal('reportModal')" class="btn-cancel">Cancel</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ══ ACTION MODAL ══════════════════════════════════════════════════════════ -->
+<div id="actionModal" class="modal-bg">
+  <div class="modal-box" style="max-width:320px">
+    <div class="flex items-center justify-between px-6 pt-5 pb-4" style="border-bottom:1px solid var(--border)">
+      <h3 class="text-white font-bold text-base flex items-center gap-2">Book Options</h3>
+      <button onclick="closeModal('actionModal')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/10"><i data-lucide="x" class="w-4 h-4" style="color:var(--muted)"></i></button>
+    </div>
+    <div class="px-6 py-5 space-y-3">
+        <button onclick="closeModal('actionModal'); setTimeout(openActionReview, 200);" class="w-full flex justify-center items-center gap-2 py-2.5 rounded-lg font-bold text-sm transition-colors" style="background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.3)">
+            <i data-lucide="star" class="w-4 h-4"></i> Rate &amp; Review
+        </button>
+        <button onclick="closeModal('actionModal'); setTimeout(openActionReport, 200);" class="w-full flex justify-center items-center gap-2 py-2.5 rounded-lg font-bold text-sm transition-colors" style="background:rgba(248,81,73,.1);color:#f87171;border:1px solid rgba(248,81,73,.3)">
+            <i data-lucide="flag" class="w-4 h-4"></i> Report an Issue
+        </button>
+    </div>
   </div>
 </div>
 
@@ -597,7 +620,7 @@ if (isset($toastMap[$uploadMsg])): ?>
     <p class="italic mt-1 text-sm" style="color:var(--muted)">"A reader lives a thousand lives before he dies."</p>
     <div class="flex gap-3 mt-3 flex-wrap">
         <div class="text-xs px-3 py-1.5 rounded" style="background:rgba(227,179,65,.1);border-left:3px solid var(--warn)">📅 Loan limit: <strong>10 days</strong></div>
-        <div class="text-xs px-3 py-1.5 rounded" style="background:rgba(248,81,73,.1);border-left:3px solid var(--err)">💰 Fine: <strong>₹5/day</strong> after due date</div>
+        <div class="text-xs px-3 py-1.5 rounded" style="background:rgba(248,81,73,.1);border-left:3px solid var(--err)">💰 Fine: <strong>₹10/day</strong> after due date</div>
         <div class="text-xs px-3 py-1.5 rounded" style="background:rgba(29,78,216,.1);border-left:3px solid #3b82f6">🔄 Extensions: <strong>Max 2× (10 days each)</strong></div>
     </div>
 </div>
@@ -715,20 +738,16 @@ if (isset($toastMap[$uploadMsg])): ?>
                     </button>
                 </form>
             <?php endif;?>
-            <!-- Review button -->
-            <button class="bc-btn review-btn" title="<?=$myRev?'Edit your review':'Rate &amp; review'?>"
-                onclick="openReviewModal(
-    <?=$b['id']?>,
-    <?=json_encode($b['title'])?>,
-    <?=json_encode($b['author'])?>,
-    <?=$myRev ? $myRev['rating'] : 0?>,
-    <?=json_encode($myRev ? $myRev['comment'] : '')?>
-)">
-            </button>
-            <!-- Report button -->
-            <button class="bc-btn report-btn" title="Report an issue"
-                onclick="openReportModal(<?=$b['id']?>,<?=json_encode($b['title'])?>)">
-                🚨
+            <!-- Action button -->
+            <button class="bc-btn action-btn" title="Options"
+                onclick='openActionModal(
+    <?=$b["id"]?>,
+    <?=htmlspecialchars(json_encode($b["title"]), ENT_QUOTES, "UTF-8")?>,
+    <?=htmlspecialchars(json_encode($b["author"]), ENT_QUOTES, "UTF-8")?>,
+    <?=$myRev ? $myRev["rating"] : 0?>,
+    <?=htmlspecialchars(json_encode($myRev ? $myRev["comment"] : ""), ENT_QUOTES, "UTF-8")?>
+)'>
+                <i data-lucide="more-vertical" class="w-4 h-4"></i>
             </button>
         </div>
     </div>
@@ -1087,6 +1106,19 @@ function openReportModal(bookId, title) {
     document.getElementById('reportBookId').value = bookId;
     document.getElementById('reportBookTitle').textContent = title;
     openModal('reportModal');
+}
+
+// ── Action modal ───────────────────────────────────────────────────────────
+let currentActionBook = {};
+function openActionModal(bookId, title, author, existingRating, existingComment) {
+    currentActionBook = { id: bookId, title: title, author: author, rating: existingRating, comment: existingComment };
+    openModal('actionModal');
+}
+function openActionReview() {
+    openReviewModal(currentActionBook.id, currentActionBook.title, currentActionBook.author, currentActionBook.rating, currentActionBook.comment);
+}
+function openActionReport() {
+    openReportModal(currentActionBook.id, currentActionBook.title);
 }
 
 // ── Auto open profile edit if name missing ────────────────────────────────
