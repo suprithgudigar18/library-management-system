@@ -29,7 +29,7 @@ try {
                 ⚠ DELETE this file (set_admin_pass.php) now for security!
             </p>
             <br>
-            <a href='login.php' style='color:#22d3ee;'>→ Go to Login</a>
+            <a href='admin_login.php' style='color:#22d3ee;'>→ Go to Login</a>
           </div>";
 } catch (PDOException $e) {
     echo "<pre style='color:red'>Error: " . $e->getMessage() . "</pre>";

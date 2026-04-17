@@ -171,6 +171,54 @@ $books=$pdo->query("
     ORDER BY b.title ASC
 ")->fetchAll();
 
+// ── Course Detection: Categorize books by course keywords ─────────────────────
+function detectCourse(string $title, string $author='', string $category='', string $genre=''): string {
+    $text = strtolower($title . ' ' . $author . ' ' . $category . ' ' . $genre);
+
+    // BCA – Computer Applications / Programming
+    $bcaKeywords = ['programming','python','java','c++','c programming','data structure','algorithm','database','dbms','networking','web development','html','css','javascript','php','software engineering','operating system','computer graphics','microprocessor','computer network','information technology','system analysis','oops','object oriented','visual basic','vb.net','asp.net','dot net','sql','mysql','computer architecture','digital electronics','compiler','automata','theory of computation','bca','computer application'];
+    foreach ($bcaKeywords as $kw) { if (str_contains($text, $kw)) return 'BCA'; }
+
+    // MCA – Advanced CS
+    $mcaKeywords = ['advanced java','design pattern','software testing','cloud computing','machine learning','artificial intelligence','deep learning','data mining','big data','cyber security','cryptography','mca','distributed system','mobile computing'];
+    foreach ($mcaKeywords as $kw) { if (str_contains($text, $kw)) return 'MCA'; }
+
+    // BCom – Commerce
+    $bcomKeywords = ['accountancy','accounting','financial accounting','cost accounting','taxation','income tax','gst','auditing','commerce','business law','mercantile','banking','insurance','financial management','corporate law','bcom','tally','economics','macro','micro','statistics','business statistics','entrepreneurship','management accounting'];
+    foreach ($bcomKeywords as $kw) { if (str_contains($text, $kw)) return 'BCom'; }
+
+    // BBA – Business Administration
+    $bbaKeywords = ['marketing','human resource','hr management','organizational behavior','business management','strategic management','operations management','supply chain','bba','retail management','international business','advertising','consumer behavior','brand management','business communication','principles of management','managerial economics'];
+    foreach ($bbaKeywords as $kw) { if (str_contains($text, $kw)) return 'BBA'; }
+
+    // MBA
+    $mbaKeywords = ['mba','corporate finance','investment','portfolio','leadership','change management','business ethics','research methodology','quantitative methods','project management'];
+    foreach ($mbaKeywords as $kw) { if (str_contains($text, $kw)) return 'MBA'; }
+
+    // MCom – Master of Commerce
+    $mcomKeywords = ['mcom','m.com','advanced accounting','advanced cost','advanced financial','indirect tax','direct tax','international finance','commerce research','corporate accounting','securities','capital market','monetary theory','banking theory','financial institutions'];
+    foreach ($mcomKeywords as $kw) { if (str_contains($text, $kw)) return 'MCom'; }
+
+    return 'General';
+}
+
+// Attach course to each book
+foreach ($books as &$b) {
+    $b['course'] = detectCourse($b['title'], $b['author'] ?? '', $b['category'] ?? '', $b['genre'] ?? '');
+}
+unset($b);
+
+// Build course counts for the filter tabs
+$courseCounts = ['All' => count($books)];
+foreach ($books as $b) {
+    $c = $b['course'];
+    $courseCounts[$c] = ($courseCounts[$c] ?? 0) + 1;
+}
+// MCom keywords
+// (added in detectCourse below — MCom detection added separately via $mcomKeywords)
+$courseOrder = ['All', 'BCA', 'MCA', 'BCom', 'MCom', 'BBA', 'MBA', 'General'];
+$courseEmojis = ['All'=>'📚','BCA'=>'💻','MCA'=>'🖥️','BCom'=>'📊','MCom'=>'📒','BBA'=>'📈','MBA'=>'🏢','General'=>'📖'];
+
 // ── Fetch My Requests ─────────────────────────────────────────────────────────
 $rs=$pdo->prepare("SELECT br.*,b.title,b.author,b.shelf,b.category FROM book_requests br JOIN books b ON b.id=br.book_id WHERE br.user_id=? ORDER BY br.requested_at DESC LIMIT 20");
 $rs->execute([$user_id]);
@@ -715,13 +763,33 @@ if ($hasLateWarning): ?>
     <?php elseif($requestMsg==='no_copies'):?><div class="mb-4 px-4 py-3 rounded-lg text-sm font-medium" style="background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);color:#f85149">⚠️ No copies available. Request a purchase in the last tab!</div>
     <?php endif;?>
 
+    <!-- ── Search & Filter ──────────────────────────────────── -->
     <div class="flex flex-col md:flex-row gap-3 mb-5">
         <div class="relative flex-1">
             <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style="color:var(--muted)"></i>
             <input type="text" id="searchInput" onkeyup="filterBooks()" placeholder="Search title, author, ISBN..." class="dark-input pl-9 py-2.5">
         </div>
-        <select id="statusFilter" onchange="filterBooks()" class="dark-input" style="width:auto"><option value="All">All Status</option><option>Available</option><option>Borrowed</option><option>Lost</option></select>
-        <select id="catFilter" onchange="filterBooks()" class="dark-input" style="width:auto"><option value="All">All Categories</option><option>Fiction</option><option>Non-Fiction</option><option>Reference</option><option>Academic</option></select>
+        <select id="statusFilter" onchange="filterBooks()" class="dark-input" style="width:auto">
+            <option value="All">All Status</option>
+            <option>Available</option>
+            <option>Borrowed</option>
+            <option>Lost</option>
+        </select>
+        <select id="catFilter" onchange="filterBooks()" class="dark-input" style="width:auto">
+            <option value="All">All Categories & Courses</option>
+            <optgroup label="Categories">
+                <option value="cat_Fiction">Fiction</option>
+                <option value="cat_Non-Fiction">Non-Fiction</option>
+                <option value="cat_Reference">Reference</option>
+                <option value="cat_Academic">Academic</option>
+            </optgroup>
+            <optgroup label="Courses">
+                <?php foreach(['BCA','MCA','BCom','MCom','BBA','MBA'] as $c): ?>
+                <option value="course_<?=$c?>"><?=$c?></option>
+                <?php endforeach; ?>
+                <option value="course_General">General</option>
+            </optgroup>
+        </select>
     </div>
 
     <?php if(empty($books)):?>
@@ -752,7 +820,8 @@ if ($hasLateWarning): ?>
          data-author="<?=strtolower(htmlspecialchars($b['author']))?>"
          data-isbn="<?=strtolower(htmlspecialchars($b['isbn']??''))?>"
          data-status="<?=htmlspecialchars($b['status'])?>"
-         data-cat="<?=htmlspecialchars($b['category']??'')?>">
+         data-cat="<?=htmlspecialchars($b['category']??'')?>"
+         data-course="<?=htmlspecialchars($b['course']??'General')?>">
 
         <div class="bc-img">
             <img src="<?=$coverUrl?>" alt="<?=htmlspecialchars($b['title'])?>" loading="lazy"
@@ -791,6 +860,16 @@ if ($hasLateWarning): ?>
         <div class="bc-body">
             <div class="bc-title"><?=htmlspecialchars($b['title'])?></div>
             <div class="bc-author">— <?=htmlspecialchars($b['author'])?></div>
+            <?php
+            $courseBadgeColors = ['BCA'=>'rgba(88,166,255,.15);color:#58a6ff;border-color:rgba(88,166,255,.35)','MCA'=>'rgba(167,139,250,.15);color:#a78bfa;border-color:rgba(167,139,250,.35)','BCom'=>'rgba(52,211,153,.15);color:#34d399;border-color:rgba(52,211,153,.35)','BBA'=>'rgba(251,191,36,.15);color:#fbbf24;border-color:rgba(251,191,36,.35)','MBA'=>'rgba(249,115,22,.15);color:#f97316;border-color:rgba(249,115,22,.35)','General'=>'rgba(139,148,158,.12);color:#8b949e;border-color:rgba(139,148,158,.25)'];
+            $courseIcons = ['BCA'=>'💻','MCA'=>'🖥️','BCom'=>'📊','BBA'=>'📈','MBA'=>'🏢','General'=>'📖'];
+            $crs = $b['course'] ?? 'General';
+            $crsStyle = $courseBadgeColors[$crs] ?? $courseBadgeColors['General'];
+            $crsIcon  = $courseIcons[$crs] ?? '📖';
+            ?>
+            <div style="margin-top:5px">
+                <span style="font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid;background:<?=$crsStyle?>"><?=$crsIcon?> <?=$crs?></span>
+            </div>
             <?php if($desc):?>
             <div class="bc-desc"><?=htmlspecialchars($desc)?></div>
             <?php endif;?>
@@ -828,8 +907,9 @@ if ($hasLateWarning): ?>
     </div>
     <?php endforeach;?>
     </div>
-    <div class="mt-4 text-sm" style="color:var(--muted)"><span id="recordCount">Showing <?=count($books)?> books</span></div>
-    <?php endif;?>
+        <div class="mt-4 text-sm" style="color:var(--muted)"><span id="recordCount">Showing <?=count($books)?> books</span></div>
+        <?php endif;?>
+
 </div>
 
 <!-- ══ MY REQUESTS ═══════════════════════════════════════════════════════════ -->
@@ -1117,12 +1197,24 @@ function copyUPI() {
 function filterBooks() {
     const s   = document.getElementById('searchInput').value.toLowerCase();
     const st  = document.getElementById('statusFilter').value;
-    const cat = document.getElementById('catFilter').value;
+    const catVal = document.getElementById('catFilter').value;
     let n = 0;
     document.querySelectorAll('#booksGrid .book-card').forEach(c => {
+        let courseMatch = true;
+        let catMatch = true;
+        
+        if (catVal.startsWith('course_')) {
+            const courseName = catVal.replace('course_', '');
+            courseMatch = c.dataset.course === courseName;
+        } else if (catVal.startsWith('cat_')) {
+            const catName = catVal.replace('cat_', '');
+            catMatch = c.dataset.cat === catName;
+        }
+
         const ok = (c.dataset.title.includes(s)||c.dataset.author.includes(s)||c.dataset.isbn.includes(s))
                 && (st==='All'||c.dataset.status===st)
-                && (cat==='All'||c.dataset.cat===cat);
+                && catMatch
+                && courseMatch;
         c.style.display = ok ? '' : 'none';
         if(ok) n++;
     });

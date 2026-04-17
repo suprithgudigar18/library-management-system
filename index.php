@@ -329,8 +329,8 @@ include "db_connect.php";
                 body: `
                     <p>By using the library facilities, you agree to the following:</p>
                     <ul>
-                        <li>Books must be returned within <b>4 days </b>from borrowed.</li>
-                        <li>A fine of <b>₹10 per day will be charged</b> for after the duedate .</li>
+                        <li>Books must be returned within <b>10 days</b> from the date of borrowing.</li>
+                        <li>A fine of <b>₹5 per day will be charged</b> after the due date.</li>
                         <li>Lost or <b>damaged books must be replaced or paid</b> for (current market price + processing fee).</li>
                         <li>Silence must be maintained in the reading room at all times.</li>
                         <li>Mobile phones must be kept on silent mode.</li>
