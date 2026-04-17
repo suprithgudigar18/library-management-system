@@ -20,6 +20,17 @@ try {
     try { $pdo->exec("ALTER TABLE `book_requests` ADD COLUMN `extension_count` TINYINT(1) DEFAULT 0"); } catch(Exception $e){}
     try { $pdo->exec("ALTER TABLE `book_reviews` ADD COLUMN `type` VARCHAR(20) DEFAULT 'review'"); } catch(Exception $e){}
     try { $pdo->exec("ALTER TABLE `book_reviews` ADD COLUMN `updated_at` DATETIME DEFAULT NULL"); } catch(Exception $e){}
+    try { 
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `website_reports` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `user_id` int(11) NOT NULL,
+            `issue_type` varchar(50) NOT NULL,
+            `description` text NOT NULL,
+            `status` varchar(20) DEFAULT 'Pending',
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"); 
+    } catch(Exception $e){}
 
 } catch (PDOException $e) {
     die("<div style='font-family:sans-serif;padding:30px;background:#1a0000;color:#ff6b6b;border:1px solid #ff4444;margin:20px;border-radius:8px;'>

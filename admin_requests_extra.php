@@ -11,7 +11,7 @@ try { $pdo->exec("CREATE TABLE IF NOT EXISTS `fine_payments` (`id` INT AUTO_INCR
 try { $pdo->exec("CREATE TABLE IF NOT EXISTS `book_purchase_requests` (`id` INT AUTO_INCREMENT PRIMARY KEY,`user_id` INT NOT NULL,`book_title` VARCHAR(255) NOT NULL,`author` VARCHAR(150) DEFAULT '',`reason` TEXT,`status` ENUM('Pending','Reviewed','Ordered','Rejected') DEFAULT 'Pending',`admin_note` TEXT,`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"); } catch(Exception $e){}
 try { $pdo->exec("ALTER TABLE `book_requests` ADD COLUMN `fine_paid` TINYINT(1) DEFAULT 0"); } catch(Exception $e){}
 
-// ── Correct fine recalculation: Rs10/day ─────────────────────────────────────
+// ── Correct fine recalculation: Rs5/day ─────────────────────────────────────
 $today = new DateTime();
 try {
     $allApproved = $pdo->query("SELECT id, due_date FROM book_requests WHERE status='Approved' AND due_date IS NOT NULL AND returned_at IS NULL")->fetchAll();
@@ -19,7 +19,7 @@ try {
         $due = new DateTime($row['due_date']);
         if ($today > $due) {
             $days = (int)$today->diff($due)->days;
-            $pdo->prepare("UPDATE book_requests SET fine_amount=? WHERE id=? AND (fine_paid IS NULL OR fine_paid=0)")->execute([$days * 10, $row['id']]);
+            $pdo->prepare("UPDATE book_requests SET fine_amount=? WHERE id=? AND (fine_paid IS NULL OR fine_paid=0)")->execute([$days * 5, $row['id']]);
         } else {
             $pdo->prepare("UPDATE book_requests SET fine_amount=0 WHERE id=? AND (fine_paid IS NULL OR fine_paid=0)")->execute([$row['id']]);
         }
@@ -287,7 +287,7 @@ body{background:var(--onyx);font-family:'Inter',sans-serif;color:white;display:f
 
     <div class="fine-rule-box">
         <i class="fas fa-calculator" style="margin-right:6px"></i>
-        <strong>Fine Rule: ₹10 per day</strong> — starts from day 1 after the 4-day loan period. 5 days late = ₹50. Auto-updated every page load.
+        <strong>Fine Rule: ₹5 per day</strong> — starts from day 1 after the 10-day loan period. 5 days late = ₹25. Auto-updated every page load.
     </div>
 
     <!-- Tabs -->
@@ -319,7 +319,7 @@ body{background:var(--onyx);font-family:'Inter',sans-serif;color:white;display:f
             $bl=['Pending'=>'bl-y','Verified'=>'bl-g','Rejected'=>'bl-r'][$fp['status']]??'bl-y';
             $due=$fp['due_date']?new DateTime($fp['due_date']):null;
             $daysLate=$due&&$today>$due?(int)$today->diff($due)->days:0;
-            $calcFine=$daysLate*10;
+            $calcFine=$daysLate*5;
         ?>
         <div class="req-card <?=$bl?> pay-card" data-status="<?=$fp['status']?>">
             <div class="card-top">

@@ -107,6 +107,17 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['submit_report'])) {
     }
 }
 
+// Report website issue
+if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['submit_website_report'])) {
+    $issue_type = $_POST['web_issue_type'] ?? 'other';
+    $description = trim($_POST['web_issue_desc'] ?? '');
+    if ($description) {
+        $pdo->prepare("INSERT INTO website_reports (user_id, issue_type, description) VALUES (?, ?, ?)")
+            ->execute([$user_id, $issue_type, $description]);
+        $uploadMsg = 'web_report_ok';
+    }
+}
+
 // ── Purchase Request ──────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['purchase_title'])) {
     $t=trim($_POST['purchase_title']??'');
@@ -135,6 +146,12 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['submit_payment'])) {
 // ── Fetch User ────────────────────────────────────────────────────────────────
 $uStmt=$pdo->prepare("SELECT * FROM users WHERE id=?"); $uStmt->execute([$user_id]);
 $userData=$uStmt->fetch();
+if (!$userData) {
+    $userData = [
+        'full_name' => '', 'reg_no' => '', 'department' => '', 
+        'dob' => '', 'phone' => '', 'address' => '', 'profile_photo' => ''
+    ];
+}
 $profilePhoto=$userData['profile_photo']??'';
 
 // ── Fetch Books (deduplicated) with avg rating ────────────────────────────────
@@ -159,15 +176,17 @@ $rs=$pdo->prepare("SELECT br.*,b.title,b.author,b.shelf,b.category FROM book_req
 $rs->execute([$user_id]);
 $myRequests=$rs->fetchAll();
 
-// ── Auto Fines ₹10/day ─────────────────────────────────────────────────────────
+// ── Auto Fines ₹5/day ─────────────────────────────────────────────────────────
 $today=new DateTime();
 foreach ($myRequests as &$req) {
     if ($req['status']==='Approved' && $req['due_date'] && !$req['returned_at'] && !($req['fine_paid']??0)) {
         $due=new DateTime($req['due_date']);
         if ($today>$due) {
-            $fine=(int)$today->diff($due)->days*10; // ₹10 per day
+            $daysLate = (int)$today->diff($due)->days;
+            $fine = $daysLate * 5; // ₹5 per day
             $pdo->prepare("UPDATE book_requests SET fine_amount=? WHERE id=?")->execute([$fine,$req['id']]);
-            $req['fine_amount']=$fine;
+            $req['fine_amount'] = $fine;
+            $req['days_late']   = $daysLate;
         }
     }
 }
@@ -371,6 +390,7 @@ $toastMap=[
     'report_ok'=>['🚨 Report submitted!','#b91c1c'],
     'extend_ok'=>['📅 Deadline extended by 10 days!','#1d4ed8'],
     'extend_err'=>['❌ Cannot extend further (max 2 times).','#f85149'],
+    'web_report_ok'=>['🚨 Website report sent to admin!','#b91c1c'],
 ];
 if (isset($toastMap[$uploadMsg])): ?>
 <script>document.addEventListener('DOMContentLoaded',()=>showToast('<?=$toastMap[$uploadMsg][0]?>','<?=$toastMap[$uploadMsg][1]?>'));</script>
@@ -388,8 +408,30 @@ if (isset($toastMap[$uploadMsg])): ?>
     <p class="mb-1" style="color:var(--muted)"><strong class="text-white"><?=htmlspecialchars($a['title'])?></strong> approved.
     <?php if($a['due_date']):?><br><span class="text-yellow-400 text-sm">Return by <strong><?=date('d M Y',strtotime($a['due_date']))?></strong></span><?php endif;?></p>
     <?php endforeach; ?>
-    <p class="text-xs mt-3 mb-5" style="color:var(--muted)">Collect from library counter. Return within <strong>10 days</strong>. Fine: ₹10/day after due date. You may extend up to <strong>2 times (10 days each)</strong>.</p>
+    <p class="text-xs mt-3 mb-5" style="color:var(--muted)">Collect from library counter. Return within <strong>10 days</strong>. Fine: ₹5/day after due date. You may extend up to <strong>2 times (10 days each)</strong>.</p>
     <button onclick="document.getElementById('apprOv').remove()" class="bg-emerald-600 text-white px-8 py-2 rounded-lg font-bold">Got it!</button>
+  </div>
+</div>
+<?php endif; ?>
+
+<?php
+$hasLateWarning = false;
+foreach($myRequests as $r) {
+    if (($r['days_late'] ?? 0) >= 29) {
+        $hasLateWarning = true;
+        break;
+    }
+}
+if ($hasLateWarning): ?>
+<div class="fixed inset-0 z-[9999] flex items-center justify-center p-4" style="background:rgba(0,0,0,.85);backdrop-filter:blur(6px)" id="lateWarningOv">
+  <div class="card max-w-md w-full p-6 text-center" style="border-color:#f87171;">
+    <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style="background:rgba(248,81,73,.2);border:1px solid rgba(248,81,73,.3)">
+        <i data-lucide="alert-triangle" class="w-8 h-8 text-red-500"></i>
+    </div>
+    <h2 class="text-xl font-bold text-white mb-2">⚠️ Message from Admin</h2>
+    <p class="mb-4 text-red-400 font-semibold text-lg">Your account will be reported if you do not pay the fine.</p>
+    <p class="text-sm mb-5" style="color:var(--muted)">You have a book that is 29 (or more) days overdue. Return the book immediately and clear your fines to avoid strict actions.</p>
+    <button onclick="document.getElementById('lateWarningOv').remove()" class="bg-red-600 hover:bg-red-500 text-white px-8 py-2 rounded-lg font-bold transition-colors">Acknowledge</button>
   </div>
 </div>
 <?php endif; ?>
@@ -465,6 +507,36 @@ if (isset($toastMap[$uploadMsg])): ?>
       <div class="flex gap-3">
         <button type="submit" class="w-full py-2.5 rounded-lg font-bold text-white text-sm" style="background:#b91c1c">🚨 Submit Report</button>
         <button type="button" onclick="closeModal('reportModal')" class="btn-cancel">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══ WEBSITE REPORT MODAL ══════════════════════════════════════════════════════════ -->
+<div id="webReportModal" class="modal-bg">
+  <div class="modal-box">
+    <div class="flex items-center justify-between px-6 pt-5 pb-4" style="border-bottom:1px solid var(--border)">
+      <h3 class="text-white font-bold text-base flex items-center gap-2"><span style="color:#e3b341">⚠️</span> Report Website Issue</h3>
+      <button onclick="closeModal('webReportModal')" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/10"><i data-lucide="x" class="w-4 h-4" style="color:var(--muted)"></i></button>
+    </div>
+    <form method="POST" class="px-6 py-5 space-y-4">
+      <input type="hidden" name="submit_website_report" value="1">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider mb-1.5" style="color:var(--muted)">Issue Type</label>
+        <select name="web_issue_type" class="dark-input">
+          <option value="bug">🐛 Bug / Error</option>
+          <option value="ui">🎨 UI / Layout Issue</option>
+          <option value="feature">💡 Feature Request</option>
+          <option value="other">⚠️ Other</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider mb-1.5" style="color:var(--muted)">Details</label>
+        <textarea name="web_issue_desc" rows="4" class="dark-input resize-none" placeholder="Describe the issue or mistake you found..." required></textarea>
+      </div>
+      <div class="flex gap-3">
+        <button type="submit" class="w-full py-2.5 rounded-lg font-bold text-white text-sm" style="background:#b91c1c">🚀 Submit Report</button>
+        <button type="button" onclick="closeModal('webReportModal')" class="btn-cancel">Cancel</button>
       </div>
     </form>
   </div>
@@ -547,7 +619,10 @@ if (isset($toastMap[$uploadMsg])): ?>
         </div>
         <?php endforeach;?>
         <div class="mt-6 pt-5" style="border-top:1px solid var(--border)">
-            <a href="index.php" class="flex items-center gap-2 text-sm font-medium text-red-400"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</a>
+            <button onclick="openModal('webReportModal')" class="flex items-center gap-2 text-sm font-medium w-full text-left mb-4" style="color:var(--warn);transition:color .2s;">
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i> Report Website Issue
+            </button>
+            <a href="index.php" class="flex items-center gap-2 text-sm font-medium text-red-400 hover:text-red-300 transition-colors"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</a>
         </div>
     </div>
     <div id="ppane-edit" class="p-5 hidden">
@@ -620,7 +695,7 @@ if (isset($toastMap[$uploadMsg])): ?>
     <p class="italic mt-1 text-sm" style="color:var(--muted)">"A reader lives a thousand lives before he dies."</p>
     <div class="flex gap-3 mt-3 flex-wrap">
         <div class="text-xs px-3 py-1.5 rounded" style="background:rgba(227,179,65,.1);border-left:3px solid var(--warn)">📅 Loan limit: <strong>10 days</strong></div>
-        <div class="text-xs px-3 py-1.5 rounded" style="background:rgba(248,81,73,.1);border-left:3px solid var(--err)">💰 Fine: <strong>₹10/day</strong> after due date</div>
+        <div class="text-xs px-3 py-1.5 rounded" style="background:rgba(248,81,73,.1);border-left:3px solid var(--err)">💰 Fine: <strong>₹5/day</strong> after due date</div>
         <div class="text-xs px-3 py-1.5 rounded" style="background:rgba(29,78,216,.1);border-left:3px solid #3b82f6">🔄 Extensions: <strong>Max 2× (10 days each)</strong></div>
     </div>
 </div>

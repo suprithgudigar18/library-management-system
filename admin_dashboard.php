@@ -17,6 +17,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $pdo->prepare("UPDATE book_purchase_requests SET status=?, admin_note=? WHERE id=?")
             ->execute([$status, $note, $pr_id]);
         $toast = "Purchase request updated!";
+    } elseif ($action === 'resolve_site_report') {
+        $report_id = (int)$_POST['report_id'];
+        $pdo->prepare("UPDATE website_reports SET status='Resolved' WHERE id=?")
+            ->execute([$report_id]);
+        $toast = "Issue marked as resolved!";
     }
     header("Location: admin_dashboard.php?toast=".urlencode($toast)); exit();
 }
@@ -379,6 +384,72 @@ $pendingPayments = $pdo->query("SELECT COUNT(*) FROM fine_payments WHERE status=
                 <div class="pc-reason">
                     <?= nl2br(htmlspecialchars($r['comment'])) ?>
                 </div>
+                <?php endif; ?>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+
+        <!-- ═══ WEBSITE REPORTS ═════════════════════════════════════════════════ -->
+        <?php
+        $webReports = [];
+        try {
+            $webReports = $pdo->query("
+                SELECT wr.*, u.username, u.full_name
+                FROM website_reports wr
+                JOIN users u ON u.id = wr.user_id
+                ORDER BY wr.id DESC LIMIT 20
+            ")->fetchAll();
+        } catch (Exception $e) { }
+        ?>
+        <div class="section-header" style="margin-top:3.5rem;">
+            <div style="display:flex;align-items:center">
+                <span class="section-title">⚠️ Website Issues Reported</span>
+                <?php $pendingWebReports = count(array_filter($webReports, fn($w) => $w['status'] === 'Pending')); ?>
+                <?php if ($pendingWebReports > 0): ?>
+                <span class="section-badge" style="background:#f59e0b;"><?= $pendingWebReports ?> pending</span>
+                <?php endif; ?>
+            </div>
+        </div>
+        
+        <?php if (empty($webReports)): ?>
+        <div class="empty-state">
+            <i class="fas fa-check-circle" style="font-size:2.5rem;margin-bottom:1rem;display:block;color:rgba(255,255,255,.2)"></i>
+            <p>No website issues reported.</p>
+        </div>
+        <?php else: ?>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:1.2rem;">
+            <?php foreach ($webReports as $w): ?>
+            <div class="purchase-card" style="border-left:3px solid <?= $w['status'] === 'Resolved' ? '#34d399' : '#f59e0b' ?>">
+                <div class="pc-header">
+                    <div style="flex:1">
+                        <div class="pc-title" style="text-transform: capitalize;">Issue: <?= htmlspecialchars($w['issue_type']) ?></div>
+                        <div class="pc-meta">
+                            <span class="pc-user"><i class="fas fa-user" style="font-size:.65rem"></i> <?= htmlspecialchars($w['full_name'] ?: $w['username']) ?></span>
+                            &nbsp;·&nbsp; <?= date('d M Y, g:i A', strtotime($w['created_at'])) ?>
+                        </div>
+                    </div>
+                    <div>
+                        <?php if ($w['status'] === 'Resolved'): ?>
+                            <span class="status-pill pill-Ordered">Resolved</span>
+                        <?php else: ?>
+                            <span class="status-pill pill-Pending">Pending</span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php if ($w['description']): ?>
+                <div class="pc-reason" style="margin-top:10px;">
+                    <?= nl2br(htmlspecialchars($w['description'])) ?>
+                </div>
+                <?php endif; ?>
+                <?php if ($w['status'] !== 'Resolved'): ?>
+                <form method="POST" style="margin-top:10px;">
+                    <input type="hidden" name="action" value="resolve_site_report">
+                    <input type="hidden" name="report_id" value="<?= $w['id'] ?>">
+                    <button type="submit" class="btn-respond" style="padding: 6px 12px; font-size: 0.75rem;">
+                        <i class="fas fa-check"></i> Mark Resolved
+                    </button>
+                </form>
                 <?php endif; ?>
             </div>
             <?php endforeach; ?>
