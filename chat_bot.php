@@ -336,14 +336,20 @@ function sendMsg() {
     input.value = '';
     addUserMsg(msg);
     const typing = addTyping();
-    setTimeout(() => {
-        typing.remove();
-        const reply = getReply(msg);
-        if (typeof reply === 'string') {
-            addBotMsg(reply);
-        } else {
-            addBotMsg(reply.text);
-            (reply.books || []).forEach(b => addBookCard(b));
+    setTimeout(async () => {
+        try {
+            const reply = await getReply(msg);
+            typing.remove();
+            if (typeof reply === 'string') {
+                addBotMsg(reply);
+            } else {
+                addBotMsg(reply.text);
+                (reply.books || []).forEach(b => addBookCard(b));
+            }
+        } catch(e) {
+            typing.remove();
+            addBotMsg("Sorry, I encountered an issue verifying that information 🛠️");
+            console.error(e);
         }
     }, 600 + Math.random() * 500);
 }
@@ -389,15 +395,21 @@ function addTyping() {
 
 function addBookCard(book) {
     const area  = document.getElementById('chatArea');
-    const seed  = (book.id * 37) % 1000;
     const avail = book.copies > 0 && book.status === 'Available';
     const desc  = book.description ? book.description.substring(0, 120) + (book.description.length > 120 ? '…' : '') : 'No description available.';
+    
+    const isbnClean = book.isbn ? book.isbn.replace(/[^0-9Xx]/g, '') : '';
+    
+    const seed = (book.id * 37) % 1000;
+    const fallbackUrl = `https://picsum.photos/seed/libbook${seed}/100/140`;
+    const coverUrl    = isbnClean ? `https://covers.openlibrary.org/b/isbn/${isbnClean}-M.jpg?default=false` : fallbackUrl;
+    
     const el = document.createElement('div');
     el.className = 'book-result';
     el.innerHTML = `
         <img class="book-cover-thumb"
-             src="https://picsum.photos/seed/libbook${seed}/100/140"
-             onerror="this.style.background='#1f2937';this.style.display='flex'"
+             src="${coverUrl}"
+             onerror="if(this.src!=='${fallbackUrl}') this.src='${fallbackUrl}'"
              alt="${escHtml(book.title)}">
         <div class="book-result-info">
             <div class="book-result-title">${escHtml(book.title)}</div>
@@ -425,28 +437,62 @@ function escHtml(str) {
 }
 
 // ── AI reply engine ────────────────────────────────────────────────────────────
-function getReply(msg) {
+async function getReply(msg) {
     const q = msg.toLowerCase().trim();
 
     // ── Describe / About a specific book ──────────────────────────────────────
     if (q.includes('describe') || q.includes('tell me about') || q.includes('what is') ||
         q.includes('about the book') || q.includes('summary of') || q.includes('synopsis')) {
-        const exact = BOOKS.filter(b => q.includes(b.title.toLowerCase()));
+        
+        let searchTitle = q.replace(/(describe|tell me about|what is|about the book|summary of|synopsis of|synopsis|the book|can you)/ig, '').trim();
+        searchTitle = searchTitle.replace(/^(about|a)\s+/i, '').trim();
+        
+        if (!searchTitle) return "Which book would you like me to describe?";
+
+        const exact = BOOKS.filter(b => searchTitle.includes(b.title.toLowerCase()) || b.title.toLowerCase().includes(searchTitle));
+        
+        let localInfo = "";
+        let foundLocal = false;
+        let matchedBook = null;
+
         if (exact.length > 0) {
-            const b = exact[0];
-            const desc = b.description || 'No description is available for this book in our records.';
-            return {
-                text: `📖 Here's everything about "${b.title}":`,
-                books: [b]
-            };
+            matchedBook = exact[0];
+            foundLocal = true;
+            if (matchedBook.description && matchedBook.description.length > 20) {
+                 return {
+                     text: `📖 Here's what I found in our library for "${matchedBook.title}":\n\n${matchedBook.description}`,
+                     books: [matchedBook]
+                 };
+            } else {
+                 localInfo = `I found "${matchedBook.title}" in our library, but we don't have a full description saved. Let me check the web for you! 🌍\n\n`;
+            }
         }
-        // Partial word match
-        const words = q.split(/\s+/).filter(w => w.length > 3);
-        const partial = BOOKS.filter(b => words.some(w => b.title.toLowerCase().includes(w) || b.author.toLowerCase().includes(w)));
-        if (partial.length > 0) {
-            return { text: `I found ${partial.length} possible match(es) for your query:`, books: partial.slice(0,4) };
+
+        // Fetch from Google Books API
+        try {
+            const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchTitle)}&maxResults=1`);
+            const data = await res.json();
+            if (data.items && data.items.length > 0) {
+                const vol = data.items[0].volumeInfo;
+                const title = vol.title;
+                const authors = vol.authors ? vol.authors.join(', ') : 'Unknown Author';
+                const desc = vol.description ? vol.description : 'A description is not available on Google Books, but this title exists in their database.';
+                
+                let text = `${localInfo}📖 **${title}** by ${authors}\n\n${desc}`;
+                
+                if (foundLocal) {
+                    return { text: text, books: [matchedBook] };
+                }
+                return text;
+            }
+        } catch (e) {
+            console.error('API Error:', e);
         }
-        return `I couldn't find that specific book. Could you tell me the exact title?\n\nOr try: "Show me Fiction books" to browse by genre.`;
+
+        if (foundLocal) {
+             return { text: `I found "${matchedBook.title}" in our library, but I couldn't fetch a deeper description online.`, books: [matchedBook] };
+        }
+        return `I couldn't find "${searchTitle}" in our library or via online archives. Could you check the spelling?`;
     }
 
     // ── Suggest / Recommend ───────────────────────────────────────────────────

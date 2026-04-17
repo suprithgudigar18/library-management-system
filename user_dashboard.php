@@ -803,8 +803,12 @@ if ($hasLateWarning): ?>
         $alreadyReq=in_array($b['id'],$reqBookIds);
         $canReq=$copies>0 && !$alreadyReq && $b['status']==='Available';
         $cClass=$copies>2?'c-ok':($copies>0?'c-low':'c-out');
-        $seed=abs($b['id']*37+(int)(crc32($b['title'])%1000))%1000;
-        $coverUrl="https://picsum.photos/seed/lib{$seed}/300/240";
+        $isbnClean = preg_replace('/[^0-9Xx]/', '', $b['isbn'] ?? '');
+        
+        // Fallback to a beautiful, realistic photograph
+        $seed = abs($b['id']*37+(int)(crc32($b['title'])%1000))%1000;
+        $fallbackUrl="https://picsum.photos/seed/lib{$seed}/300/420";
+        $coverUrl = !empty($isbnClean) ? "https://covers.openlibrary.org/b/isbn/{$isbnClean}-L.jpg?default=false" : $fallbackUrl;
         $catBg=['Fiction'=>'#3b0764','Non-Fiction'=>'#0c4a6e','Academic'=>'#064e3b','Reference'=>'#78350f','Horror'=>'#450a0a'];
         $bg=$catBg[$b['category']??'']??'#0f172a';
         $desc=trim($b['description']??'');
@@ -825,7 +829,7 @@ if ($hasLateWarning): ?>
 
         <div class="bc-img">
             <img src="<?=$coverUrl?>" alt="<?=htmlspecialchars($b['title'])?>" loading="lazy"
-                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+                 onerror="if(this.src!=='<?=$fallbackUrl?>') this.src='<?=$fallbackUrl?>'; else {this.style.display='none';this.nextElementSibling.style.display='flex';}"
                  style="width:100%;height:100%;object-fit:cover;">
             <div class="bc-placeholder" style="display:none;background:linear-gradient(155deg,<?=$bg?>,<?=$bg?>cc)">
                 <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M8 7h6M8 11h8M8 15h5"/></svg>
