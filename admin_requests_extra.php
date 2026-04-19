@@ -90,63 +90,53 @@ $totalFines      = $pdo->query("SELECT COALESCE(SUM(fine_amount),0) FROM book_re
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;600&display=swap');
-:root{--accent:#22d3ee;--onyx:#02040a;--glass:rgba(255,255,255,.03);--border:rgba(255,255,255,.1);
-      --red:#f87171;--green:#34d399;--yellow:#fbbf24;--blue:#60a5fa;--muted:rgba(255,255,255,.5);--purple:#a78bfa;}
+:root{--accent:#0284c7;--onyx:#ffffff;--glass:#ffffff;--border:#e2e8f0;
+      --red:#ef4444;--green:#059669;--yellow:#d97706;--blue:#2563eb;--muted:#64748b;--purple:#7c3aed;}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--onyx);font-family:'Inter',sans-serif;color:white;display:flex;min-height:100vh;}
-
-/* ── Sidebar — matches admin_dashboard.php exactly ── */
-.sidebar{position:fixed;top:0;left:0;height:100vh;width:250px;background:rgba(0,0,0,.4);
-  padding:2rem 1rem;border-right:1px solid var(--border);z-index:1000;
-  box-shadow:2px 0 15px rgba(0,0,0,.3);overflow-y:auto;}
-.logo{font-family:'Playfair Display',serif;font-size:1.4rem;color:white;text-align:center;
-  margin-bottom:2.5rem;display:flex;align-items:center;justify-content:center;gap:10px;}
-.logo-dot{height:40px;width:40px;border-radius:50%;background:var(--accent);display:inline-block;}
-.nav-item{display:flex;align-items:center;padding:.8rem 1.2rem;margin:.3rem 0;text-decoration:none;
-  color:rgba(255,255,255,.8);border-radius:8px;transition:all .3s;white-space:nowrap;gap:10px;font-size:.9rem;}
-.nav-item:hover,.nav-item.active{background:var(--glass);color:var(--accent);}
-.nav-item i{width:20px;text-align:center;flex-shrink:0;}
-.nav-badge{background:#ef4444;color:white;font-size:.6rem;font-weight:700;
-  padding:1px 6px;border-radius:10px;margin-left:auto;}
+body{background:var(--onyx);font-family:'Inter',sans-serif;color:#0f172a;display:block;min-height:100vh;}
 
 /* ── Main ── */
-.main{margin-left:250px;flex:1;padding:2rem;}
+.main{margin-left:0;flex:1;padding:2rem;max-width:1300px;margin:0 auto;}
 
 /* ── Page header ── */
 .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;}
 .page-left{display:flex;align-items:center;gap:14px;}
 .page-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;
-  justify-content:center;font-size:1.4rem;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.2);}
-.page-title{font-family:'Playfair Display',serif;font-size:1.8rem;}
+  justify-content:center;font-size:1.4rem;background:#e0f2fe;border:1px solid #bae6fd;}
+.page-title{font-family:'Playfair Display',serif;font-size:1.8rem;color:#0f172a;}
 .page-sub{font-size:.82rem;color:var(--muted);margin-top:2px;}
-.back-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;
-  background:var(--glass);border:1px solid var(--border);color:rgba(255,255,255,.6);
-  text-decoration:none;font-size:.82rem;transition:all .25s;}
-.back-btn:hover{border-color:var(--accent);color:var(--accent);}
+.back-btn {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 16px; border-radius:8px;
+    background:#ffffff; border:1px solid #cbd5e1;
+    color:#475569; text-decoration:none; font-size:.85rem; font-weight:600;
+    transition:all .25s ease; font-family:'Inter', sans-serif;
+}
+.back-btn:hover { border-color:#0284c7; color:#0284c7; background:#f0f9ff; }
 
 /* ── Stats (same style as admin_dashboard) ── */
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:1.2rem;margin-bottom:2rem;}
 .stat-card{background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--border);
   border-radius:16px;padding:1.3rem;text-align:center;}
 .stat-value{font-size:1.8rem;font-weight:700;margin:.4rem 0;}
-.stat-label{color:rgba(255,255,255,.6);font-size:.8rem;}
+.stat-label{color:#64748b;font-size:.8rem;}
 .stat-icon{font-size:1.3rem;margin-bottom:.3rem;}
 
 /* ── Fine rule reminder ── */
-.fine-rule-box{background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);
-  border-radius:10px;padding:10px 16px;font-size:.8rem;color:rgba(255,255,255,.55);margin-bottom:1.5rem;}
-.fine-rule-box strong{color:var(--yellow);}
+.fine-rule-box{background:#fef3c7;border:1px solid #fde68a;
+  border-radius:10px;padding:10px 16px;font-size:.8rem;color:#b45309;margin-bottom:1.5rem;}
+.fine-rule-box strong{color:#92400e;}
 
 /* ── Tabs ── */
-.tabs{display:flex;gap:4px;background:rgba(255,255,255,.04);border:1px solid var(--border);
+.tabs{display:flex;gap:4px;background:#f8fafc;border:1px solid var(--border);
   border-radius:12px;padding:4px;margin-bottom:1.8rem;width:fit-content;}
 .tab-btn{padding:9px 22px;border-radius:9px;border:none;background:transparent;color:var(--muted);
   font-family:'Inter',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .25s;
   display:flex;align-items:center;gap:7px;white-space:nowrap;}
-.tab-btn.active{background:var(--accent);color:#000;}
+.tab-btn.active{background:var(--accent);color:#fff;}
 .tab-count{font-size:.65rem;font-weight:700;padding:1px 7px;border-radius:10px;}
-.tab-btn.active .tab-count{background:rgba(0,0,0,.2);color:#000;}
-.tab-btn:not(.active) .tab-count{background:rgba(255,255,255,.1);color:white;}
+.tab-btn.active .tab-count{background:rgba(255,255,255,.3);color:#fff;}
+.tab-btn:not(.active) .tab-count{background:#e2e8f0;color:var(--muted);}
 
 /* ── Filter pills ── */
 .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.2rem;}
@@ -155,15 +145,15 @@ body{background:var(--onyx);font-family:'Inter',sans-serif;color:white;display:f
 .filter-pill.active{background:var(--accent);border-color:var(--accent);color:#000;}
 
 /* ── Request cards ── */
-.req-card{background:rgba(255,255,255,.03);border:1px solid var(--border);
+.req-card{background:#f8fafc;border:1px solid var(--border);
   border-radius:16px;padding:1.3rem 1.5rem;margin-bottom:.9rem;transition:border-color .25s;}
-.req-card:hover{border-color:rgba(34,211,238,.3);}
+.req-card:hover{border-color:#7dd3fc;}
 .req-card.bl-y{border-left:3px solid var(--yellow);}
 .req-card.bl-g{border-left:3px solid var(--green);}
 .req-card.bl-r{border-left:3px solid var(--red);}
 .req-card.bl-b{border-left:3px solid var(--blue);}
 .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;}
-.card-title{font-size:1rem;font-weight:700;color:white;margin-bottom:3px;}
+.card-title{font-size:1rem;font-weight:700;color:#0f172a;margin-bottom:3px;}
 .card-sub{font-size:.8rem;color:var(--muted);}
 .card-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;}
 .chip{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;padding:2px 9px;border-radius:20px;}
@@ -183,10 +173,10 @@ body{background:var(--onyx);font-family:'Inter',sans-serif;color:white;display:f
 
 /* ── Info boxes ── */
 .info-box{border-radius:8px;padding:9px 13px;font-size:.8rem;margin-top:8px;line-height:1.6;}
-.box-upi{background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);color:var(--blue);font-family:monospace;}
-.box-reason{background:rgba(255,255,255,.04);border:1px solid var(--border);color:rgba(255,255,255,.65);}
-.box-admin{background:rgba(34,211,238,.07);border:1px solid rgba(34,211,238,.2);color:rgba(255,255,255,.7);}
-.box-admin strong{color:var(--accent);}
+.box-upi{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-family:monospace;}
+.box-reason{background:#ffffff;border:1px solid var(--border);color:#475569;}
+.box-admin{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;}
+.box-admin strong{color:#15803d;}
 
 /* ── Action buttons ── */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:9px;
@@ -211,10 +201,10 @@ body{background:var(--onyx);font-family:'Inter',sans-serif;color:white;display:f
 .resp-form.open{display:block;animation:fi .25s ease;}
 @keyframes fi{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 .fg{display:grid;grid-template-columns:170px 1fr auto;gap:10px;align-items:end;}
-.gi{width:100%;padding:9px 13px;background:rgba(255,255,255,.06);border:1px solid var(--border);
-  border-radius:9px;color:white;font-family:'Inter',sans-serif;font-size:.85rem;outline:none;transition:border-color .25s;}
+.gi{width:100%;padding:9px 13px;background:#ffffff;border:1px solid var(--border);
+  border-radius:9px;color:#0f172a;font-family:'Inter',sans-serif;font-size:.85rem;outline:none;transition:border-color .25s;}
 .gi:focus{border-color:var(--accent);}
-.gi option{background:#111;}
+.gi option{background:#ffffff;color:#0f172a;}
 .lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px;}
 .status-legend{margin-top:10px;font-size:.72rem;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;}
 
@@ -222,7 +212,7 @@ body{background:var(--onyx);font-family:'Inter',sans-serif;color:white;display:f
 .empty{text-align:center;padding:4rem 2rem;color:var(--muted);background:var(--glass);
   border:1px solid var(--border);border-radius:16px;}
 .empty i{font-size:2.5rem;margin-bottom:1rem;display:block;opacity:.3;}
-.empty h3{color:white;margin-bottom:6px;font-size:1rem;}
+.empty h3{color:#0f172a;margin-bottom:6px;font-size:1rem;}
 
 /* ── Toast ── */
 .toast-box{position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;
@@ -243,36 +233,17 @@ body{background:var(--onyx);font-family:'Inter',sans-serif;color:white;display:f
 </div>
 <?php endif; ?>
 
-<!-- SIDEBAR -->
-<aside class="sidebar">
-    <div class="logo"><div class="logo-dot"></div>LIBRITE ADMIN</div>
-    <a href="admin_dashboard.php"       class="nav-item"><i class="fas fa-home"></i> Dashboard</a>
-    <a href="manage_books.php"          class="nav-item"><i class="fas fa-book"></i> Manage Books</a>
-    <a href="manage_users.php"          class="nav-item"><i class="fas fa-users"></i> Manage Users</a>
-    <a href="book_requests.php"         class="nav-item">
-        <i class="fas fa-clipboard-list"></i> Book Requests
-        <?php if($pendingReqs>0):?><span class="nav-badge"><?=$pendingReqs?></span><?php endif;?>
-    </a>
-    <a href="admin_requests_extra.php"  class="nav-item active">
-        <i class="fas fa-credit-card"></i> Payments & Orders
-        <?php if($pendingPay+$pendingPurchase>0):?><span class="nav-badge"><?=$pendingPay+$pendingPurchase?></span><?php endif;?>
-    </a>
-    <a href="report.php" class="nav-item"><i class="fas fa-chart-bar"></i> Reports & Analytics </a>
-    <a href="admin_forgot_password.php" class="nav-item"><i class="fas fa-lock"></i> Change Password</a>
-    <a href="index.php" class="nav-item" style="margin-top:2rem;color:#f87171;"><i class="fas fa-sign-out-alt"></i> Logout</a>
-</aside>
-
 <!-- MAIN -->
 <main class="main">
     <div class="page-header">
         <div class="page-left">
-            <div class="page-icon">💳</div>
+            <a href="admin_dashboard.php" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
+            <div class="page-icon" style="margin-left:10px;">💳</div>
             <div>
                 <div class="page-title">Payments & Orders</div>
                 <div class="page-sub">Verify fine payments · Respond to book purchase requests</div>
             </div>
         </div>
-        <a href="admin_dashboard.php" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
     </div>
 
     <!-- Stats bar -->
@@ -325,7 +296,7 @@ body{background:var(--onyx);font-family:'Inter',sans-serif;color:white;display:f
             <div class="card-top">
                 <div style="flex:1">
                     <div class="card-title"><i class="fas fa-rupee-sign" style="font-size:.85rem;margin-right:3px"></i><?=number_format($fp['amount'],2)?> Fine Payment</div>
-                    <div class="card-sub">Book: <strong style="color:white"><?=htmlspecialchars($fp['book_title'])?></strong></div>
+                    <div class="card-sub">Book: <strong style="color:#0f172a"><?=htmlspecialchars($fp['book_title'])?></strong></div>
                     <div class="card-meta">
                         <span class="chip chip-user"><i class="fas fa-user" style="font-size:.6rem"></i><?=htmlspecialchars($fp['full_name'])?></span>
                         <span class="chip chip-amt">Submitted: ₹<?=number_format($fp['amount'],2)?></span>
@@ -430,7 +401,7 @@ body{background:var(--onyx);font-family:'Inter',sans-serif;color:white;display:f
             <div class="resp-form" id="order-<?=$pr['id']?>">
                 <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px">
                     <i class="fas fa-info-circle" style="margin-right:4px;color:var(--accent)"></i>
-                    Your response will be shown to the student instantly in their <strong style="color:white">Request a Book</strong> tab.
+                    Your response will be shown to the student instantly in their <strong style="color:#0f172a">Request a Book</strong> tab.
                 </p>
                 <form method="POST">
                     <input type="hidden" name="action" value="update_purchase">

@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 06, 2026 at 10:47 PM
+-- Generation Time: Apr 19, 2026 at 08:42 PM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- PHP Version: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -169,7 +169,117 @@ INSERT INTO `books` (`id`, `title`, `author`, `isbn`, `publisher`, `year`, `cate
 (103, 'rather than', 'rajesha', '533664646', '', '', 'real', 'real', 'Available', 5, 'A-01', NULL, '2026-04-05 15:53:54', 5, 5, ''),
 (104, 'rabiya', 'rrfsd', '9.35E+09', '', '', 'horror', 'horror', 'Available', 10, 'A-01', NULL, '2026-04-06 09:45:00', 1, 1, ''),
 (105, 'sdfsdf', 'dfgdf', '64569569', '', '', 'magic', 'magic', 'Available', 25, 'A-01', NULL, '2026-04-06 09:45:00', 1, 1, ''),
-(106, 'rather than', 'rajesha', '533664646', '', '', 'real', 'real', 'Available', 5, 'A-01', NULL, '2026-04-06 09:45:00', 1, 1, '');
+(106, 'rather than', 'rajesha', '533664646', '', '', 'real', 'real', 'Available', 5, 'A-01', NULL, '2026-04-06 09:45:00', 1, 1, ''),
+(107, 'Programming in C', 'Dennis Ritchie', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(108, 'Data Structures using C', 'Reema Thareja', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(109, 'Computer Fundamentals', 'P.K. Sinha', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(110, 'Operating System Concepts', 'Silberschatz', '', '', '', 'MCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(111, 'Database Management System', 'Korth', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(112, 'Java Programming', 'Herbert Schildt', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(113, 'Python Programming', 'Guido Van Rossum', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(114, 'Web Technologies', 'Jeffrey Jackson', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(115, 'Software Engineering', 'Pressman', '', '', '', 'MCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(116, 'Computer Networks', 'Andrew Tanenbaum', '', '', '', 'MCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(117, 'Artificial Intelligence', 'Stuart Russell', '', '', '', 'MCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(118, 'Machine Learning Basics', 'Tom Mitchell', '', '', '', 'MCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(119, 'Cloud Computing', 'Rajkumar Buyya', '', '', '', 'MCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(120, 'Cyber Security', 'William Stallings', '', '', '', 'MCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(121, 'Big Data Analytics', 'Viktor Mayer', '', '', '', 'MCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(122, 'Mobile App Development', 'Google Dev Team', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(123, 'PHP & MySQL', 'Luke Welling', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(124, 'HTML & CSS', 'Jon Duckett', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(125, 'JavaScript Essentials', 'Douglas Crockford', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(126, 'Data Science Intro', 'Joel Grus', '', '', '', 'MCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(127, 'Principles of Management', 'Harold Koontz', '', '', '', 'BBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(128, 'Business Communication', 'C.S. Rayudu', '', '', '', 'BBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(129, 'Marketing Management', 'Philip Kotler', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(130, 'Human Resource Management', 'Gary Dessler', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(131, 'Financial Management', 'I.M. Pandey', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(132, 'Organizational Behavior', 'Stephen Robbins', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(133, 'Strategic Management', 'Fred David', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(134, 'Business Ethics', 'Velasquez', '', '', '', 'BBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(135, 'Entrepreneurship Development', 'Khanka', '', '', '', 'BBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(136, 'Operations Management', 'Heizer', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(137, 'Supply Chain Management', 'Sunil Chopra', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(138, 'Retail Management', 'Levy & Weitz', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(139, 'International Business', 'Hill', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(140, 'Business Analytics', 'James Evans', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(141, 'Leadership Theory', 'Peter Northouse', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(142, 'Project Management', 'Kerzner', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(143, 'Digital Marketing', 'Ryan Deiss', '', '', '', 'BBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(144, 'E-Commerce', 'Kenneth Laudon', '', '', '', 'BBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(145, 'Startup Management', 'Eric Ries', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(146, 'Business Law', 'N.D. Kapoor', '', '', '', 'BBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(147, 'Financial Accounting', 'T.S. Grewal', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(148, 'Corporate Accounting', 'S.N. Maheshwari', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(149, 'Cost Accounting', 'Jain & Narang', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(150, 'Business Economics', 'H.L. Ahuja', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(151, 'Income Tax Law', 'Girish Ahuja', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(152, 'Auditing', 'Arun Jha', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(153, 'Banking Theory', 'Sundaram', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(154, 'Business Statistics', 'Gupta', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(155, 'Advanced Accounting', 'M.C. Shukla', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(156, 'Financial Reporting', 'ICAI', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(157, 'GST Law', 'V.S. Datey', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(158, 'Investment Analysis', 'Reilly & Brown', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(159, 'Corporate Finance', 'Ross', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(160, 'Business Finance', 'Khan & Jain', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(161, 'Principles of Economics', 'Samuelson', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(162, 'Micro Economics', 'Varian', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(163, 'Macro Economics', 'Blanchard', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(164, 'Accounting Standards', 'ICAI', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(165, 'Risk Management', 'Hull', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(166, 'Insurance Principles', 'Black', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(167, 'C++ Programming', 'Bjarne Stroustrup', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(168, 'Advanced Java', 'Herbert Schildt', '', '', '', 'MCA', '', 'Borrowed', 0, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(169, 'Data Mining', 'Han & Kamber', '', '', '', 'MCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(170, 'Unix Programming', 'Kernighan', '', '', '', 'MCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(171, 'Compiler Design', 'Aho', '', '', '', 'MCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(172, 'Discrete Mathematics', 'Rosen', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(173, 'Numerical Methods', 'Jain', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(174, 'Android Development', 'Google', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(175, 'iOS Development', 'Apple', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(176, 'Game Development', 'Unity Docs', '', '', '', 'MCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(177, 'Brand Management', 'Keller', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(178, 'Advertising Management', 'Belch', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(179, 'Sales Management', 'Spiro', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(180, 'Customer Relationship Mgmt', 'Buttle', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(181, 'Business Research Methods', 'Cooper', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(182, 'HR Analytics', 'Fitz-enz', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(183, 'Negotiation Skills', 'Fisher', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(184, 'Corporate Strategy', 'Porter', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(185, 'Innovation Management', 'Tidd', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(186, 'Change Management', 'Kotter', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(187, 'Business Environment', 'Francis Cherunilam', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(188, 'Company Law', 'Kapoor', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(189, 'Financial Markets', 'Fabozzi', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(190, 'Portfolio Management', 'Sharpe', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(191, 'Behavioral Finance', 'Shiller', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(192, 'Public Finance', 'Musgrave', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(193, 'Development Economics', 'Todaro', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(194, 'Managerial Economics', 'Dominick', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(195, 'Industrial Economics', 'Barthwal', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(196, 'International Finance', 'Madura', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(197, 'Advanced Python', 'Mark Lutz', '', '', '', 'MCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(198, 'React JS', 'Meta Docs', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(199, 'Node JS', 'Ryan Dahl', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(200, 'MongoDB Guide', 'Chodorow', '', '', '', 'BCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(201, 'DevOps Basics', 'Gene Kim', '', '', '', 'MCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(202, 'Blockchain Basics', 'Nakamoto', '', '', '', 'MCA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(203, 'AI for Business', 'McKinsey', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(204, 'FinTech Basics', 'Arner', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(205, 'Startup Finance', 'Brad Feld', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(206, 'Business Forecasting', 'Makridakis', '', '', '', 'MBA', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(207, 'Tax Planning', 'Singhania', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(208, 'Corporate Tax', 'ICAI', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(209, 'Accounting Theory', 'Hendriksen', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(210, 'E-Banking', 'Indian Institute', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(211, 'Financial Derivatives', 'Hull', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(212, 'Trade Finance', 'Finance Experts', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(213, 'Retail Banking', 'Indian Banking', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(214, 'Microfinance', 'Yunus', '', '', '', 'BCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(215, 'Public Policy', 'Anderson', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, ''),
+(216, 'Global Economics', 'Krugman', '', '', '', 'MCom', '', 'Available', 1, '', NULL, '2026-04-17 19:37:33', 1, 1, '');
 
 -- --------------------------------------------------------
 
@@ -193,8 +303,9 @@ CREATE TABLE `book_purchase_requests` (
 --
 
 INSERT INTO `book_purchase_requests` (`id`, `user_id`, `book_title`, `author`, `reason`, `status`, `admin_note`, `created_at`) VALUES
-(1, 1, 'Dear Debbie', 'Freida McFadden', 'i love reading thrilling books', 'Pending', 'it will be get u soon', '2026-04-06 08:59:35'),
-(2, 1, 'Dear Debbie', 'Freida McFadden', 'i love reading thrilling books', 'Pending', 'i will reach u soon', '2026-04-06 10:07:45');
+(1, 1, 'Dear Debbie', 'Freida McFadden', 'i love reading thrilling books', 'Reviewed', 'it will be get u soon', '2026-04-06 08:59:35'),
+(2, 1, 'Dear Debbie', 'Freida McFadden', 'i love reading thrilling books', 'Ordered', 'i will reach u soon', '2026-04-06 10:07:45'),
+(3, 3, 'stranger be again', 'ds', 'df', 'Reviewed', '', '2026-04-18 08:45:30');
 
 -- --------------------------------------------------------
 
@@ -215,17 +326,43 @@ CREATE TABLE `book_requests` (
   `notified` tinyint(1) DEFAULT 0,
   `fine_paid` tinyint(1) DEFAULT 0,
   `payment_ref` varchar(100) DEFAULT '',
-  `payment_screenshot` varchar(255) DEFAULT ''
+  `payment_screenshot` varchar(255) DEFAULT '',
+  `extension_count` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `book_requests`
 --
 
-INSERT INTO `book_requests` (`id`, `user_id`, `book_id`, `status`, `requested_at`, `approved_at`, `due_date`, `returned_at`, `fine_amount`, `notified`, `fine_paid`, `payment_ref`, `payment_screenshot`) VALUES
-(1, 1, 4, 'Approved', '2026-04-05 16:30:40', '2026-04-06 14:55:11', '2026-04-10', NULL, 0.00, 1, 0, '', ''),
-(2, 1, 28, 'Approved', '2026-04-05 16:32:33', '2026-04-06 14:55:09', '2026-04-10', NULL, 0.00, 1, 0, '', ''),
-(3, 2, 4, 'Returned', '2026-04-02 09:42:17', '2026-04-02 15:13:54', '2026-04-05', '2026-04-02 15:14:04', 0.00, 0, 0, '', '');
+INSERT INTO `book_requests` (`id`, `user_id`, `book_id`, `status`, `requested_at`, `approved_at`, `due_date`, `returned_at`, `fine_amount`, `notified`, `fine_paid`, `payment_ref`, `payment_screenshot`, `extension_count`) VALUES
+(1, 1, 4, 'Approved', '2026-04-05 16:30:40', '2026-04-06 14:55:11', '2026-04-10', NULL, 45.00, 1, 0, '', '', 0),
+(2, 1, 28, 'Approved', '2026-04-05 16:32:33', '2026-04-06 14:55:09', '2026-04-20', NULL, 0.00, 1, 0, '', '', 1),
+(3, 2, 4, 'Returned', '2026-04-02 09:42:17', '2026-04-02 15:13:54', '2026-04-05', '2026-04-02 15:14:04', 0.00, 0, 0, '', '', 0),
+(4, 3, 168, 'Approved', '2026-04-18 08:44:28', '2026-04-18 14:18:01', '2026-04-22', NULL, 0.00, 0, 0, '', '', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `book_reviews`
+--
+
+CREATE TABLE `book_reviews` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `book_id` int(11) NOT NULL,
+  `rating` int(11) DEFAULT 0,
+  `comment` text DEFAULT NULL,
+  `type` varchar(20) DEFAULT 'review',
+  `created_at` datetime DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `book_reviews`
+--
+
+INSERT INTO `book_reviews` (`id`, `user_id`, `book_id`, `rating`, `comment`, `type`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, 4, '', 'review', '2026-04-18 00:41:01', '2026-04-18 01:08:04');
 
 -- --------------------------------------------------------
 
@@ -280,7 +417,30 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `name`, `username`, `email`, `password`, `role`, `status`, `dept`, `member_type`, `year`, `register_no`, `security_answer`, `profile_photo`, `full_name`, `reg_no`, `department`, `dob`, `address`, `phone`, `created_at`) VALUES
 (1, 'suprith', 'suprith', '9663468615', '$2y$10$RbsV4mWcvWzDhrCb1sCMcOomLtwJDb.l0daDKfb3mY860htZ.WSgu', 'user', 'Active', '', 'Student', 'N/A', 'U06ED23S0020', 'stranger things', 'uploads/profiles/user_1_1775403923.jpg', 'suprith d', '', '', NULL, '', '', '2026-04-05 15:44:31'),
-(2, 'darshan', 'darshan', '6360052336', '$2y$10$Kdk0mctxRVMEv4XHdsI2luLa6bR6M.aNk1wb.QrLD7rwqW0.RXOUa', 'user', 'Active', '', 'Student', 'N/A', 'U06ED23S0021', 'tiger', '', '', '', '', NULL, '', '', '2026-04-06 09:41:27');
+(2, 'darshan', 'darshan', '6360052336', '$2y$10$Kdk0mctxRVMEv4XHdsI2luLa6bR6M.aNk1wb.QrLD7rwqW0.RXOUa', 'user', 'Active', '', 'Student', 'N/A', 'U06ED23S0021', 'tiger', '', '', '', '', NULL, '', '', '2026-04-06 09:41:27'),
+(3, 'thrupti gowda', 'thrupti gowda', '8296863012', '$2y$10$jrqLSWpiNVDer8Z431JL0eguaMrNXar1uMMeEUcm8nNOLjToM1pVO', 'user', 'Active', '', 'Student', 'N/A', 'U06ED24S0061', 'can we be strangers again', 'uploads/profiles/user_3_1776501729.jpg', '', '', '', NULL, NULL, '', '2026-04-18 08:41:14');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `website_reports`
+--
+
+CREATE TABLE `website_reports` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `issue_type` varchar(50) NOT NULL,
+  `description` text NOT NULL,
+  `status` varchar(20) DEFAULT 'Pending',
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `website_reports`
+--
+
+INSERT INTO `website_reports` (`id`, `user_id`, `issue_type`, `description`, `status`, `created_at`) VALUES
+(1, 3, 'bug', 'clear this eror', 'Pending', '2026-04-18 14:12:55');
 
 --
 -- Indexes for dumped tables
@@ -315,6 +475,14 @@ ALTER TABLE `book_requests`
   ADD KEY `book_id` (`book_id`);
 
 --
+-- Indexes for table `book_reviews`
+--
+ALTER TABLE `book_reviews`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `book_id` (`book_id`);
+
+--
 -- Indexes for table `fine_payments`
 --
 ALTER TABLE `fine_payments`
@@ -330,6 +498,12 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `username` (`username`);
 
 --
+-- Indexes for table `website_reports`
+--
+ALTER TABLE `website_reports`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -343,19 +517,25 @@ ALTER TABLE `admin_creds`
 -- AUTO_INCREMENT for table `books`
 --
 ALTER TABLE `books`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=107;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=217;
 
 --
 -- AUTO_INCREMENT for table `book_purchase_requests`
 --
 ALTER TABLE `book_purchase_requests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `book_requests`
 --
 ALTER TABLE `book_requests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `book_reviews`
+--
+ALTER TABLE `book_reviews`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `fine_payments`
@@ -367,7 +547,13 @@ ALTER TABLE `fine_payments`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `website_reports`
+--
+ALTER TABLE `website_reports`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Constraints for dumped tables

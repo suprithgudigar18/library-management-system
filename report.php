@@ -123,16 +123,16 @@ $overdueList = $pdo->query("
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;600&display=swap');
 
         :root {
-            --primary:   #22d3ee;
-            --bg:        #02040a;
-            --glass:     rgba(255,255,255,.04);
-            --gb:        rgba(255,255,255,.1);
-            --text:      rgba(255,255,255,.85);
-            --muted:     rgba(255,255,255,.45);
-            --success:   #34d399;
-            --warn:      #fbbf24;
-            --danger:    #f87171;
-            --purple:    #a78bfa;
+            --primary:   #0284c7;
+            --bg:        #ffffff;
+            --glass:     #f8fafc;
+            --gb:        #e2e8f0;
+            --text:      #0f172a;
+            --muted:     #64748b;
+            --success:   #059669;
+            --warn:      #ea580c;
+            --danger:    #dc2626;
+            --purple:    #7c3aed;
         }
         *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
         body { background:var(--bg); font-family:'Inter',sans-serif; color:var(--text); }
@@ -142,23 +142,24 @@ $overdueList = $pdo->query("
             display:flex; align-items:center; justify-content:space-between;
             padding:1rem 2rem; border-bottom:1px solid var(--gb);
             position:sticky; top:0; z-index:100;
-            background:rgba(2,4,10,.92); backdrop-filter:blur(12px);
+            background:rgba(255,255,255,.94); backdrop-filter:blur(12px);
         }
         .topbar-left { display:flex; align-items:center; gap:14px; }
         .back-btn {
-            display:inline-flex; align-items:center; gap:7px;
-            color:var(--primary); text-decoration:none; font-size:.88rem;
-            padding:6px 14px; border:1px solid rgba(34,211,238,.3); border-radius:8px;
-            transition:all .25s;
+            display:inline-flex; align-items:center; gap:6px;
+            padding:8px 16px; border-radius:8px;
+            background:#ffffff; border:1px solid #cbd5e1;
+            color:#475569; text-decoration:none; font-size:.85rem; font-weight:600;
+            transition:all .25s ease; font-family:'Inter', sans-serif;
         }
-        .back-btn:hover { background:rgba(34,211,238,.08); }
+        .back-btn:hover { border-color:#0284c7; color:#0284c7; background:#f0f9ff; }
         .page-title { font-family:'Playfair Display',serif; font-size:1.4rem; }
 
         /* ── Filter bar ─────────────────────────────── */
         .filter-bar {
             display:flex; align-items:center; gap:8px; flex-wrap:wrap;
             padding:.8rem 2rem; border-bottom:1px solid var(--gb);
-            background:rgba(255,255,255,.015);
+            background:#f1f5f9;
         }
         .filter-bar span { font-size:.8rem; color:var(--muted); margin-right:4px; }
         .range-btn {
@@ -218,10 +219,10 @@ $overdueList = $pdo->query("
         }
         .table-head-title { font-size:.95rem; font-weight:600; }
         table { width:100%; border-collapse:collapse; }
-        thead tr { background:rgba(255,255,255,.03); }
+        thead tr { background:#f8fafc; }
         th { padding:.75rem 1.2rem; font-size:.75rem; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); text-align:left; }
-        td { padding:.7rem 1.2rem; font-size:.85rem; border-top:1px solid rgba(255,255,255,.04); }
-        tr:hover td { background:rgba(255,255,255,.02); }
+        td { padding:.7rem 1.2rem; font-size:.85rem; border-top:1px solid var(--gb); }
+        tr:hover td { background:#f8fafc; }
         .rank { font-weight:700; color:var(--primary); }
         .pill {
             display:inline-block; padding:2px 10px; border-radius:20px; font-size:.7rem; font-weight:700;
@@ -234,7 +235,7 @@ $overdueList = $pdo->query("
         /* ── Activity feed ──────────────────────────── */
         .feed-item {
             display:flex; align-items:flex-start; gap:12px;
-            padding:.75rem 1.2rem; border-top:1px solid rgba(255,255,255,.04);
+            padding:.75rem 1.2rem; border-top:1px solid var(--gb);
         }
         .feed-icon {
             width:32px; height:32px; border-radius:8px; display:flex;
@@ -253,7 +254,7 @@ $overdueList = $pdo->query("
         .legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
 
         /* ── Bar track ──────────────────────────────── */
-        .bar-track { flex:1; height:7px; background:rgba(255,255,255,.07); border-radius:4px; overflow:hidden; }
+        .bar-track { flex:1; height:7px; background:#e2e8f0; border-radius:4px; overflow:hidden; }
         .bar-fill  { height:100%; border-radius:4px; transition:width .5s ease; }
 
         .overdue-days { color:#f87171; font-weight:700; }
@@ -523,7 +524,7 @@ $overdueList = $pdo->query("
 </div><!-- /content -->
 
 <script>
-Chart.defaults.color = 'rgba(255,255,255,.5)';
+Chart.defaults.color = '#64748b';
 Chart.defaults.font.family = 'Inter, sans-serif';
 Chart.defaults.font.size   = 11;
 
@@ -547,8 +548,8 @@ new Chart(document.getElementById('borrowChart'), {
         responsive: true,
         plugins: { legend: { display: false } },
         scales: {
-            x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { maxTicksLimit: 8 } },
-            y: { grid: { color: 'rgba(255,255,255,.05)' }, beginAtZero: true, ticks: { stepSize: 1 } }
+            x: { grid: { color: '#f1f5f9' }, ticks: { maxTicksLimit: 8 } },
+            y: { grid: { color: '#f1f5f9' }, beginAtZero: true, ticks: { stepSize: 1 } }
         }
     }
 });
@@ -572,8 +573,8 @@ new Chart(document.getElementById('memberChart'), {
         responsive: true,
         plugins: { legend: { display: false } },
         scales: {
-            x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { maxTicksLimit: 8 } },
-            y: { grid: { color: 'rgba(255,255,255,.05)' }, beginAtZero: true, ticks: { stepSize: 1 } }
+            x: { grid: { color: '#f1f5f9' }, ticks: { maxTicksLimit: 8 } },
+            y: { grid: { color: '#f1f5f9' }, beginAtZero: true, ticks: { stepSize: 1 } }
         }
     }
 });
@@ -589,7 +590,7 @@ new Chart(document.getElementById('statusChart'), {
         datasets: [{
             data: statusValues,
             backgroundColor: statusLabels.map(s => statusColors[s] || '#888'),
-            borderColor: '#02040a', borderWidth: 2, hoverOffset: 6,
+            borderColor: '#ffffff', borderWidth: 2, hoverOffset: 6,
         }]
     },
     options: {
@@ -613,7 +614,7 @@ new Chart(document.getElementById('categoryChart'), {
         datasets: [{
             data: catValues,
             backgroundColor: catPalette,
-            borderColor: '#02040a', borderWidth: 2, hoverOffset: 6,
+            borderColor: '#ffffff', borderWidth: 2, hoverOffset: 6,
         }]
     },
     options: {

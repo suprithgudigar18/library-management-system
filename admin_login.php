@@ -3,11 +3,7 @@ session_start();
 
 $error = "";
 
-// ── STATIC ADMIN CREDENTIALS ──────────────────────────────────────────────
-// Change these two values to update admin login
-define('ADMIN_USERNAME', 'admin');
-define('ADMIN_PASSWORD', 'admin123');
-// ─────────────────────────────────────────────────────────────────────────
+require 'db_connect.php';
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $username = trim($_POST['username'] ?? '');
@@ -15,17 +11,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     if (empty($username) || empty($password)) {
         $error = "Please fill in all fields.";
-    } elseif ($username === ADMIN_USERNAME && $password === ADMIN_PASSWORD) {
-        // ── Login successful ──
-        session_regenerate_id(true);
-        $_SESSION['admin_id']  = 1;
-        $_SESSION['user_id']   = 1;
-        $_SESSION['username']  = ADMIN_USERNAME;
-        $_SESSION['role']      = 'admin';
-        header("Location: admin_dashboard.php");
-        exit();
     } else {
-        $error = "Invalid username or password.";
+        $stmt = $pdo->prepare("SELECT id, password FROM admin_creds WHERE username=?");
+        $stmt->execute([$username]);
+        $admin = $stmt->fetch();
+        
+        if ($admin && password_verify($password, $admin['password'])) {
+            session_regenerate_id(true);
+            $_SESSION['admin_id']  = $admin['id'];
+            $_SESSION['user_id']   = $admin['id'];
+            $_SESSION['username']  = $username;
+            $_SESSION['role']      = 'admin';
+            header("Location: admin_dashboard.php");
+            exit();
+        } else {
+            $error = "Invalid username or password.";
+        }
     }
 }
 ?>

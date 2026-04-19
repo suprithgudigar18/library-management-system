@@ -162,7 +162,7 @@ $books=$pdo->query("
     FROM (
         SELECT MIN(id) AS id, title, author, isbn,
                SUM(copies) AS copies, MAX(status) AS status,
-               category, genre, shelf, description
+               category, genre, shelf, description, MAX(cover_image) AS cover_image
         FROM books
         GROUP BY LOWER(TRIM(title)), LOWER(TRIM(author))
     ) b
@@ -808,7 +808,11 @@ if ($hasLateWarning): ?>
         // Fallback to a beautiful, realistic photograph
         $seed = abs($b['id']*37+(int)(crc32($b['title'])%1000))%1000;
         $fallbackUrl="https://picsum.photos/seed/lib{$seed}/300/420";
-        $coverUrl = !empty($isbnClean) ? "https://covers.openlibrary.org/b/isbn/{$isbnClean}-L.jpg?default=false" : $fallbackUrl;
+        if (!empty($b['cover_image']) && file_exists($b['cover_image'])) {
+            $coverUrl = $b['cover_image'] . "?v=" . time();
+        } else {
+            $coverUrl = !empty($isbnClean) ? "https://covers.openlibrary.org/b/isbn/{$isbnClean}-L.jpg?default=false" : $fallbackUrl;
+        }
         $catBg=['Fiction'=>'#3b0764','Non-Fiction'=>'#0c4a6e','Academic'=>'#064e3b','Reference'=>'#78350f','Horror'=>'#450a0a'];
         $bg=$catBg[$b['category']??'']??'#0f172a';
         $desc=trim($b['description']??'');

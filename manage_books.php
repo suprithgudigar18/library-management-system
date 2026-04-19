@@ -32,18 +32,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $copies      = (int)($_POST['copies']     ?? 1);
         $shelf       = trim($_POST['shelf']       ?? '');
         $description = trim($_POST['description'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+
+        $cover_image = '';
+        if (isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] === 0) {
+            $ext = pathinfo($_FILES['cover_image']['name'], PATHINFO_EXTENSION);
+            $fn = "cover_" . time() . "_" . rand(100, 999) . "." . $ext;
+            @mkdir("uploads/books", 0755, true);
+            if (move_uploaded_file($_FILES['cover_image']['tmp_name'], "uploads/books/$fn")) {
+                $cover_image = "uploads/books/$fn";
+            }
+        }
 
         if ($id > 0) {
-            $sql = "UPDATE books SET title=?,author=?,isbn=?,publisher=?,year=?,category=?,
-                    genre=?,status=?,copies=?,shelf=?,description=? WHERE id=?";
-            $pdo->prepare($sql)->execute([$title,$author,$isbn,$publisher,$year,$category,
-                                          $genre,$status,$copies,$shelf,$description,$id]);
+            if ($cover_image) {
+                $sql = "UPDATE books SET title=?,author=?,isbn=?,publisher=?,year=?,category=?,
+                        genre=?,status=?,copies=?,shelf=?,description=?,cover_image=? WHERE id=?";
+                $pdo->prepare($sql)->execute([$title,$author,$isbn,$publisher,$year,$category,
+                                              $genre,$status,$copies,$shelf,$description,$cover_image,$id]);
+            } else {
+                $sql = "UPDATE books SET title=?,author=?,isbn=?,publisher=?,year=?,category=?,
+                        genre=?,status=?,copies=?,shelf=?,description=? WHERE id=?";
+                $pdo->prepare($sql)->execute([$title,$author,$isbn,$publisher,$year,$category,
+                                              $genre,$status,$copies,$shelf,$description,$id]);
+            }
             $toast = "Book updated successfully.";
         } else {
-            $sql = "INSERT INTO books (title,author,isbn,publisher,year,category,genre,status,copies,shelf,description)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?)";
-            $pdo->prepare($sql)->execute([$title,$author,$isbn,$publisher,$year,$category,
-                                          $genre,$status,$copies,$shelf,$description]);
+            $sql = "INSERT INTO books (title,author,isbn,publisher,year,category,genre,status,copies,shelf,description".($cover_image?',cover_image':'').")
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?".($cover_image?',?':'').")";
+            $params = [$title,$author,$isbn,$publisher,$year,$category,$genre,$status,$copies,$shelf,$description];
+            if ($cover_image) $params[] = $cover_image;
+            $pdo->prepare($sql)->execute($params);
             $toast = "Book added to library and database.";
         }
     }
@@ -209,7 +228,7 @@ $books = $pdo->query("SELECT * FROM books ORDER BY id DESC")->fetchAll();
             <button id="tab-details"   onclick="switchTab('details')"   class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-500">Category</button>
             <button id="tab-inventory" onclick="switchTab('inventory')" class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-500">Inventory</button>
         </div>
-        <form id="bookForm" method="POST" class="space-y-4">
+        <form id="bookForm" method="POST" enctype="multipart/form-data" class="space-y-4">
             <input type="hidden" name="action" value="save">
             <input type="hidden" name="id"     id="inp_id">
 
@@ -227,8 +246,12 @@ $books = $pdo->query("SELECT * FROM books ORDER BY id DESC")->fetchAll();
                     <div><label class="block text-sm font-medium text-slate-700 mb-1">Publisher</label>
                         <input name="publisher" id="inp_publisher" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></div>
                 </div>
-                <div><label class="block text-sm font-medium text-slate-700 mb-1">Publication Year</label>
-                    <input type="number" name="year" id="inp_year" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label class="block text-sm font-medium text-slate-700 mb-1">Publication Year</label>
+                        <input type="number" name="year" id="inp_year" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></div>
+                    <div><label class="block text-sm font-medium text-slate-700 mb-1">Cover Image (Optional)</label>
+                        <input type="file" name="cover_image" accept="image/*" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"></div>
+                </div>
                 <div><label class="block text-sm font-medium text-slate-700 mb-1">Description</label>
                     <textarea name="description" id="inp_description" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea></div>
             </div>
