@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if (isset($_GET['toast'])) { $toast = $_GET['toast']; $toastType = $_GET['type'] ?? 'success'; }
-$books = $pdo->query("SELECT * FROM books ORDER BY id DESC")->fetchAll();
+$books = $pdo->query("SELECT * FROM books ORDER BY title ASC")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">

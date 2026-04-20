@@ -165,7 +165,15 @@ $pendingPayments = $pdo->query("SELECT COUNT(*) FROM fine_payments WHERE status=
 
 <div class="dashboard">
     <aside class="sidebar" id="sidebar">
-        <div class="logo"><div class="logo-dot"></div>LIBRITE ADMIN</div>
+        <div class="logo">
+            <div style="background:rgba(255,255,255,0.08);width:44px;height:44px;border-radius:50%;border:1px solid rgba(34,211,238,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                </svg>
+            </div>
+            LIBRITE ADMIN
+        </div>
         <a href="admin_dashboard.php" class="nav-item active"><i class="fas fa-home"></i> Dashboard</a>
         <a href="manage_books.php"    class="nav-item"><i class="fas fa-book"></i> Manage Books</a>
         <a href="manage_users.php"    class="nav-item"><i class="fas fa-users"></i> Manage Users</a>
