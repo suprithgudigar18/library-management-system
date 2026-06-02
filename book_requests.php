@@ -57,14 +57,19 @@ $counts = $pdo->query("SELECT status, COUNT(*) as c FROM book_requests GROUP BY 
 
 // ── Auto-calculate fines ─────────────────────────────────────────────────────
 $today = new DateTime();
+$today->setTime(0, 0, 0);
 foreach ($requests as &$req) {
-    if ($req['status'] === 'Approved' && $req['due_date'] && !$req['returned_at']) {
+    if ($req['status'] === 'Approved' && $req['due_date'] && !$req['returned_at'] && !($req['fine_paid'] ?? 0)) {
         $due = new DateTime($req['due_date']);
+        $due->setTime(0, 0, 0);
         if ($today > $due) {
             $days = (int)$today->diff($due)->days;
-            $fine = $days * 10;
+            $fine = $days * 5;
             $pdo->prepare("UPDATE book_requests SET fine_amount=? WHERE id=?")->execute([$fine, $req['id']]);
             $req['fine_amount'] = $fine;
+        } else {
+            $pdo->prepare("UPDATE book_requests SET fine_amount=0 WHERE id=? AND (fine_paid IS NULL OR fine_paid=0)")->execute([$req['id']]);
+            $req['fine_amount'] = 0;
         }
     }
 }

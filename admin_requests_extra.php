@@ -13,10 +13,12 @@ try { $pdo->exec("ALTER TABLE `book_requests` ADD COLUMN `fine_paid` TINYINT(1) 
 
 // ── Correct fine recalculation: Rs5/day ─────────────────────────────────────
 $today = new DateTime();
+$today->setTime(0, 0, 0);
 try {
     $allApproved = $pdo->query("SELECT id, due_date FROM book_requests WHERE status='Approved' AND due_date IS NOT NULL AND returned_at IS NULL")->fetchAll();
     foreach ($allApproved as $row) {
         $due = new DateTime($row['due_date']);
+        $due->setTime(0, 0, 0);
         if ($today > $due) {
             $days = (int)$today->diff($due)->days;
             $pdo->prepare("UPDATE book_requests SET fine_amount=? WHERE id=? AND (fine_paid IS NULL OR fine_paid=0)")->execute([$days * 5, $row['id']]);

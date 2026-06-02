@@ -214,8 +214,6 @@ foreach ($books as $b) {
     $c = $b['course'];
     $courseCounts[$c] = ($courseCounts[$c] ?? 0) + 1;
 }
-// MCom keywords
-// (added in detectCourse below — MCom detection added separately via $mcomKeywords)
 $courseOrder = ['All', 'BCA', 'MCA', 'BCom', 'MCom', 'BBA', 'MBA', 'General'];
 $courseEmojis = ['All'=>'📚','BCA'=>'💻','MCA'=>'🖥️','BCom'=>'📊','MCom'=>'📒','BBA'=>'📈','MBA'=>'🏢','General'=>'📖'];
 
@@ -226,15 +224,21 @@ $myRequests=$rs->fetchAll();
 
 // ── Auto Fines ₹5/day ─────────────────────────────────────────────────────────
 $today=new DateTime();
+$today->setTime(0, 0, 0);
 foreach ($myRequests as &$req) {
     if ($req['status']==='Approved' && $req['due_date'] && !$req['returned_at'] && !($req['fine_paid']??0)) {
         $due=new DateTime($req['due_date']);
+        $due->setTime(0, 0, 0);
         if ($today>$due) {
             $daysLate = (int)$today->diff($due)->days;
             $fine = $daysLate * 5; // ₹5 per day
             $pdo->prepare("UPDATE book_requests SET fine_amount=? WHERE id=?")->execute([$fine,$req['id']]);
             $req['fine_amount'] = $fine;
             $req['days_late']   = $daysLate;
+        } else {
+            $pdo->prepare("UPDATE book_requests SET fine_amount=0 WHERE id=? AND (fine_paid IS NULL OR fine_paid=0)")->execute([$req['id']]);
+            $req['fine_amount'] = 0;
+            $req['days_late']   = 0;
         }
     }
 }

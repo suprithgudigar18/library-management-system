@@ -30,7 +30,7 @@ if (isset($_GET['toast'])) $toast = $_GET['toast'];
 // ── Live stats ────────────────────────────────────────────────────────────────
 $totalBooks   = $pdo->query("SELECT COUNT(*) FROM books")->fetchColumn();
 $totalMembers = $pdo->query("SELECT COUNT(*) FROM users WHERE role='user'")->fetchColumn();
-$totalFines   = $pdo->query("SELECT COALESCE(SUM(fine_amount),0) FROM book_requests WHERE fine_amount > 0")->fetchColumn();
+$totalFines   = $pdo->query("SELECT COALESCE(SUM(fine_amount),0) FROM book_requests WHERE fine_amount > 0 AND (fine_paid IS NULL OR fine_paid = 0)")->fetchColumn();
 $pendingReqs  = $pdo->query("SELECT COUNT(*) FROM book_requests WHERE status='Pending'")->fetchColumn();
 $activeLoans  = $pdo->query("SELECT COUNT(*) FROM book_requests WHERE status='Approved'")->fetchColumn();
 

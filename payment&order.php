@@ -13,15 +13,20 @@ $msgType = "success";
 
 // 1. AUTO-CALCULATE FINES (Ensure DB is updated)
 $today = new DateTime();
+$today->setTime(0, 0, 0); // Normalize to midnight for accurate calendar-day calculation
 $activeLoans = $pdo->prepare("SELECT id, due_date, fine_paid FROM book_requests WHERE user_id=? AND status='Approved' AND returned_at IS NULL");
 $activeLoans->execute([$user_id]);
 foreach ($activeLoans->fetchAll() as $req) {
     if ($req['due_date'] && !($req['fine_paid'] ?? 0)) {
         $due = new DateTime($req['due_date']);
+        $due->setTime(0, 0, 0); // Normalize due date to midnight
         if ($today > $due) {
-            $daysLate = (int)$today->diff($due)->days;
+            $daysLate = (int)$due->diff($today)->days; // due → today = positive days overdue
             $fine = $daysLate * 5; // ₹5 per day calculation
             $pdo->prepare("UPDATE book_requests SET fine_amount=? WHERE id=?")->execute([$fine, $req['id']]);
+        } else {
+            // Not overdue — ensure fine is cleared
+            $pdo->prepare("UPDATE book_requests SET fine_amount=0 WHERE id=? AND (fine_paid IS NULL OR fine_paid=0)")->execute([$req['id']]);
         }
     }
 }
