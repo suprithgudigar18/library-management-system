@@ -424,7 +424,7 @@ body {
 
 <!-- QUICK CHIPS -->
 <div class="chips-row" id="chipsRow">
-    <span class="chip" onclick="sendQuick('Suggest books for me')">✨ Suggest for me</span>
+    <span class="chip" onclick="sendQuick(' books for me')">✨ Suggest for me</span>
     <span class="chip" onclick="sendQuick('Show Fiction books available')">📖 Fiction</span>
     <span class="chip" onclick="sendQuick('Show Academic books')">🎓 Academic</span>
     <span class="chip" onclick="sendQuick('Explain fine system')">💰 Fines</span>
@@ -778,14 +778,15 @@ async function getReply(msg){
     if(/\b(fine|penalty|overdue|late fee|charge|payment)\b/.test(q)){
         return `💰 Fine System — LIBRITE Library
 
-📅 Loan period: 4 days from approval
-⚠️  Fine starts: Day 1 after due date
-💸 Rate: ₹10 per day overdue
+📅 Loan period: 10 days from approval
+⚠️  Fine starts: Day after due date
+💸 Rate: ₹5 per 10 day
 
 Example breakdown:
-  • 1 day late   →  ₹10
-  • 5 days late  →  ₹50
-  • 10 days late →  ₹100
+  • 10 day late   →  ₹5
+  • 20 day late   →  ₹10
+   
+
 
 💳 How to pay:
   Dashboard → Fine tab → Scan QR / use UPI ID
@@ -802,9 +803,9 @@ Example breakdown:
 4️⃣  You get notified when approved
 5️⃣  Collect from the library counter
 
-⏱  Loan period: 4 days
+⏱  Loan period: 10 days
 🔁  Return on time to avoid fines
-⚠️  Fine: ₹10/day if overdue`;
+⚠️  Fine: ₹5/day if overdue`;
     }
 
     /* ── Library stats ── */
